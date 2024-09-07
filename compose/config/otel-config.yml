@@ -1,0 +1,22 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  jaeger:
+    endpoint: "http://jaeger:14268/api/traces"
+  prometheus:
+    endpoint: "0.0.0.0:8888"
+    namespace: jenkins
+    metrics_schema: "v1"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [jaeger]
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]

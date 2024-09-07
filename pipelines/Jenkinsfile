@@ -1,0 +1,71 @@
+node {
+  try {
+    stage('Checkout Project Hadoop') {
+      // Clone the actual project repository
+      git branch: 'branch-3.3.6', url: 'https://github.com/apache/hadoop.git'
+    }
+
+    stage('Set Up JDK 8') {
+      // Version should be 17.
+      sh 'java -version'
+
+      // Set JAVA_HOME_8 to JAVA_HOME.
+      env.JAVA_HOME = env.JAVA_HOME_8
+      env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+
+      // Verify the Java version, it should now be 8.
+      sh 'java -version'
+    }
+
+    stage('Build') {
+      // We are on the cloned repo dir.
+      sh 'ls -lah'
+    
+      // Use the configured Maven installation
+      dir('hadoop-common-project/hadoop-common') {
+        withMaven(maven: 'M3') {
+          sh 'mvn clean install -DskipTests -DskipShade'
+        }
+      }
+
+      dir('hadoop-hdfs-project/hadoop-hdfs') {
+        withMaven(maven: 'M3') {
+          sh 'mvn clean install -DskipTests -DskipShade'
+        }
+      }
+    }
+
+    stage('Test Modules in Parallel') {
+      parallel(
+        'Test hadoop-common': {
+          dir('hadoop-common-project/hadoop-common') {
+            withMaven(maven: 'M3') {
+              // Run specific test classes in hadoop-common
+              sh 'mvn test -Dtest=TestConfigurationDeprecation,TestCommonConfigurationKeys'
+            }
+          }
+        },
+        'Test hadoop-hdfs': {
+          dir('hadoop-hdfs-project/hadoop-hdfs') {
+            withMaven(maven: 'M3') {
+              // Run specific test classes in hadoop-hdfs
+              sh 'mvn test -Dtest=TestLeaseManager,TestHDFSConstants'
+            }
+          }
+        }
+      )
+    }
+
+    // If all stages succeed
+    echo 'Build and tests succeeded!'
+
+  } catch (Exception e) {
+    // If any stage fails, this block will handle it
+    echo 'Build or tests failed! Investigate the issue.'
+    error "Build failed: ${e.getMessage()}"
+  } finally {
+    // This block always runs, whether the build fails or succeeds
+    echo 'Cleaning up after the build...'
+    // Perform any cleanup actions or notifications here
+  }
+}

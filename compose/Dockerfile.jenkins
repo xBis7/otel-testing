@@ -1,0 +1,49 @@
+# Base Jenkins LTS with JDK 17 image
+FROM jenkins/jenkins:lts-jdk17
+
+# Switch to root user to install packages
+USER root
+
+# Update the package lists
+RUN apt-get update
+
+# Detect system architecture and install the appropriate JDK 8 version
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
+        echo "Installing JDK 8 for ARM64 (aarch64)"; \
+        apt-get install -y wget gnupg2 software-properties-common && \
+        wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - && \
+        add-apt-repository --yes https://packages.adoptium.net/artifactory/deb/ && \
+        apt-get update && \
+        apt-get install -y temurin-8-jdk && \
+        export JAVA_HOME_8=/usr/lib/jvm/temurin-8-jdk-arm64; \
+    elif [ "$ARCH" = "armv7l" ]; then \
+        echo "Installing JDK 8 for ARM32 (armv7l)"; \
+        apt-get install -y openjdk-8-jdk && \
+        export JAVA_HOME_8=/usr/lib/jvm/java-8-openjdk-armhf; \
+    elif [ "$ARCH" = "x86_64" ]; then \
+        echo "Installing JDK 8 for x86_64"; \
+        apt-get install -y openjdk-8-jdk && \
+        export JAVA_HOME_8=/usr/lib/jvm/java-8-openjdk-amd64; \
+    else \
+        echo "Unsupported architecture: $ARCH. Exiting."; \
+        exit 1; \
+    fi && \
+    echo "JDK 8 installed for $ARCH"
+
+# Install ping utility (iputils-ping)
+RUN apt-get update && apt-get install -y iputils-ping
+
+# Switch back to the Jenkins user
+USER jenkins
+
+# Set up environment variables for JDK 8 (can be used in pipeline later)
+ENV JAVA_HOME_8=$JAVA_HOME_8
+# ENV PATH="$JAVA_HOME_8/bin:$PATH"
+
+# Expose Jenkins port
+EXPOSE 8080
+EXPOSE 50000
+
+# Default Jenkins entrypoint
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/jenkins.sh"]
