@@ -4,7 +4,7 @@ services:
   # Jenkins Service
   jenkins:
     build:
-      context: ./jenkins
+      context: ./jenkins_files
       dockerfile: Dockerfile.jenkins
     container_name: jenkins
     hostname: jenkins
@@ -13,8 +13,9 @@ services:
       - "50000:50000"
     volumes:
       - ./jenkins_files/jenkins-config.yml:/var/jenkins_home/casc_configs/jenkins-config.yml
-      - ./jenkins_files/pipelines/Jenkinsfile.hadoop:/var/jenkins_home/Jenkinsfile.hadoop
-      - ./jenkins_files/pipelines/pipeline_jobs.groovy:/var/jenkins_home/pipeline_jobs.groovy
+      # Mount the entire pipeline dir.
+      - ./jenkins_files/pipelines:/var/jenkins_home/pipelines
+      - ./jenkins_files/shared-libraries:/var/jenkins_home/shared-libraries
       - ./jenkins_files/init.groovy.d:/var/jenkins_home/init.groovy.d
     environment:
       JAVA_OPTS: "-Duser.timezone=Etc/UTC"

@@ -3,19 +3,17 @@
 pipelineJob('hadoop-test') {
   definition {
     cps {
-      script(readFileFromWorkspace('/var/jenkins_home/Jenkinsfile.hadoop'))
+      script(readFileFromWorkspace('/var/jenkins_home/pipelines/Jenkinsfile.hadoop'))
       sandbox(true)
     }
   }
 }
 
-// For multiple pipelines.
-
-// pipelineJob('PipelineJob2') {
-//   definition {
-//     cps {
-//       script(readFileFromWorkspace('Jenkinsfile2'))
-//       sandbox(true)
-//     }
-//   }
-// }
+pipelineJob('hadoop-test-custom-spans') {
+  definition {
+    cps {
+      script(readFileFromWorkspace('/var/jenkins_home/pipelines/Jenkinsfile.hadoop.custom.spans'))
+      sandbox(true)
+    }
+  }
+}

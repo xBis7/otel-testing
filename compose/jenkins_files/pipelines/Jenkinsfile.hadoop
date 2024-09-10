@@ -1,7 +1,7 @@
 node {
   try {
     stage('Checkout Project Hadoop') {
-      // Clone the actual project repository
+      // Clone the project repository
       git branch: 'branch-3.3.6', url: 'https://github.com/apache/hadoop.git'
     }
 
@@ -60,12 +60,10 @@ node {
     echo 'Build and tests succeeded!'
 
   } catch (Exception e) {
-    // If any stage fails, this block will handle it
     echo 'Build or tests failed! Investigate the issue.'
     error "Build failed: ${e.getMessage()}"
   } finally {
-    // This block always runs, whether the build fails or succeeds
     echo 'Cleaning up after the build...'
-    // Perform any cleanup actions or notifications here
+    // TODO: Add extra cleanup actions or notifications here.
   }
 }

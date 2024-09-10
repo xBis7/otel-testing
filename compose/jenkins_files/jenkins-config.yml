@@ -22,6 +22,10 @@ jenkins:
             value: "true"
 
 tool:
+  git:
+    installations:
+      - name: git
+        home: /usr/bin/git
   jdk:
     installations:
       - name: "jdk8"
@@ -49,6 +53,22 @@ unclassified:
       - jaeger:
           name: "jaeger"
           jaegerBaseUrl: "http://localhost:16686"
+
+  globalLibraries:
+    libraries:
+      # This name will be used in the pipeline script
+      - name: "shared-tracing-library"
+        # Version or branch, empty since this isn't version-controlled
+        defaultVersion: "master"
+        allowVersionOverride: false
+        # This is for implicitly loading the library in all pipelines.
+        implicit: false
+        includeInChangesets: false
+        retriever:
+          legacySCM:
+            scm:
+              fileSystem:
+                path: "/var/jenkins_home/shared-libraries/shared-tracing-library"
 
 credentials:
   system:

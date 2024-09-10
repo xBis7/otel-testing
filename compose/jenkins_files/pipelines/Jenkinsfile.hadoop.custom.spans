@@ -1,0 +1,124 @@
+node {
+  try {
+    // Stage to Build the Shared Library
+    stage('Build Shared Library') {
+      dir('/var/jenkins_home/shared-libraries/shared-tracing-library') {  // Update with the correct path to the library
+        // Build the shared library using Maven or another build tool
+        withMaven(maven: 'M3') {
+            sh 'mvn clean install'
+        }
+      }
+    }
+
+    // Load the shared library after it has been built
+    @Library('shared-tracing-library') _
+
+    // Checkout Project Hadoop
+    stage('Checkout Project Hadoop') {
+      // Start a span for this stage
+      def checkoutSpan = tracing.startSpan('Checkout Project Hadoop')
+      try {
+        // Clone the project repository
+        git branch: 'branch-3.3.6', url: 'https://github.com/apache/hadoop.git'
+      } catch (Exception e) {
+        tracing.recordException(checkoutSpan, e)
+        throw e
+      } finally {
+        tracing.endSpan(checkoutSpan)
+      }
+    }
+
+    // Set up JDK 8
+    stage('Set Up JDK 8') {
+      def setupJDKSpan = tracing.startSpan('Set Up JDK 8')
+      try {
+        sh 'java -version'
+
+        env.JAVA_HOME = env.JAVA_HOME_8
+        env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+
+        sh 'java -version'
+      } catch (Exception e) {
+        tracing.recordException(setupJDKSpan, e)
+        throw e
+      } finally {
+        tracing.endSpan(setupJDKSpan)
+      }
+    }
+
+    // Build the Hadoop Project
+    stage('Build') {
+      def buildSpan = tracing.startSpan('Build Project')
+      try {
+        sh 'ls -lah'
+
+        dir('hadoop-common-project/hadoop-common') {
+          withMaven(maven: 'M3') {
+            sh 'mvn clean install -DskipTests -DskipShade'
+          }
+        }
+
+        dir('hadoop-hdfs-project/hadoop-hdfs') {
+          withMaven(maven: 'M3') {
+            sh 'mvn clean install -DskipTests -DskipShade'
+          }
+        }
+      } catch (Exception e) {
+        tracing.recordException(buildSpan, e)
+        throw e
+      } finally {
+        tracing.endSpan(buildSpan)
+      }
+    }
+
+    // Test Modules in Parallel
+    stage('Test Modules in Parallel') {
+      parallel(
+        'Test hadoop-common': {
+          def spanCommon = tracing.startSpan('Test hadoop-common')
+          try {
+            dir('hadoop-common-project/hadoop-common') {
+              withMaven(maven: 'M3') {
+                tracing.setSpanAttribute(spanCommon, 'test.class', 'TestConfigurationDeprecation,TestCommonConfigurationKeys')
+                sh 'mvn test -Dtest=TestConfigurationDeprecation,TestCommonConfigurationKeys'
+              }
+            }
+            tracing.setSpanAttribute(spanCommon, 'status', 'success')
+          } catch (Exception e) {
+            tracing.recordException(spanCommon, e)
+            tracing.setSpanAttribute(spanCommon, 'status', 'failure')
+            throw e
+          } finally {
+            tracing.endSpan(spanCommon)
+          }
+        },
+        'Test hadoop-hdfs': {
+          def spanHdfs = tracing.startSpan('Test hadoop-hdfs')
+          try {
+            dir('hadoop-hdfs-project/hadoop-hdfs') {
+              withMaven(maven: 'M3') {
+                tracing.setSpanAttribute(spanHdfs, 'test.class', 'TestLeaseManager,TestHDFSConstants')
+                sh 'mvn test -Dtest=TestLeaseManager,TestHDFSConstants'
+              }
+            }
+            tracing.setSpanAttribute(spanHdfs, 'status', 'success')
+          } catch (Exception e) {
+            tracing.recordException(spanHdfs, e)
+            tracing.setSpanAttribute(spanHdfs, 'status', 'failure')
+            throw e
+          } finally {
+            tracing.endSpan(spanHdfs)
+          }
+        }
+      )
+    }
+
+    echo 'Build and tests succeeded!'
+
+  } catch (Exception e) {
+    echo 'Build or tests failed! Investigate the issue.'
+    error "Build failed: ${e.getMessage()}"
+  } finally {
+    echo 'Cleaning up after the build...'
+  }
+}

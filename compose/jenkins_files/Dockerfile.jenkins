@@ -35,7 +35,7 @@ RUN ARCH=$(uname -m) && \
 RUN apt-get install -y iputils-ping
 
 # Copy the plugins.txt file under the Docker image
-COPY jenkins/plugins.txt /usr/share/jenkins/ref/plugins.txt
+COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 
 # Install plugins using Plugin Installation Manager Tool.
 # We need to install the plugins before using the configuration-as-code file.

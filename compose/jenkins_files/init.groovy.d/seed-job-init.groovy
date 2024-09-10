@@ -16,7 +16,7 @@ if (seedJob == null) {
 
     // Define the build step to copy the DSL script into the workspace
     def copyScript = '''
-        cp /var/jenkins_home/pipeline_jobs.groovy ${WORKSPACE}/pipeline_jobs.groovy
+        cp /var/jenkins_home/pipelines/pipeline_jobs.groovy ${WORKSPACE}/pipeline_jobs.groovy
     '''
 
     seedProject.buildersList.add(new hudson.tasks.Shell(copyScript))

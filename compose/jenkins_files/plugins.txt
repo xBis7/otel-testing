@@ -22,6 +22,7 @@ durable-task
 echarts-api
 eddsa-api
 email-ext
+filesystem_scm
 font-awesome-api
 git
 git-client
