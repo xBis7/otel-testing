@@ -4,7 +4,7 @@ services:
   # Jenkins Service
   jenkins:
     build:
-      context: .
+      context: ./jenkins
       dockerfile: Dockerfile.jenkins
     container_name: jenkins
     hostname: jenkins
@@ -12,10 +12,14 @@ services:
       - "8080:8080"
       - "50000:50000"
     volumes:
-      - ./jenkins_data:/var/jenkins_home
-      - ../pipelines/Jenkinsfile:/var/jenkins_home/Jenkinsfile
+      - ./jenkins_files/jenkins-config.yml:/var/jenkins_home/casc_configs/jenkins-config.yml
+      - ./jenkins_files/pipelines/Jenkinsfile.hadoop:/var/jenkins_home/Jenkinsfile.hadoop
+      - ./jenkins_files/pipelines/pipeline_jobs.groovy:/var/jenkins_home/pipeline_jobs.groovy
+      - ./jenkins_files/init.groovy.d:/var/jenkins_home/init.groovy.d
     environment:
       JAVA_OPTS: "-Duser.timezone=Etc/UTC"
+      # Path to JCasC config
+      CASC_JENKINS_CONFIG: "/var/jenkins_home/casc_configs/jenkins-config.yml"
     # use user 'root' to have enough permissions for the entrypoint.sh
     # user: root
     networks:
@@ -28,8 +32,8 @@ services:
     container_name: otel-collector
     hostname: otel-collector
     ports:
-      - "4317:4317"  # For gRPC
-      - "55681:55681"  # For Jaeger HTTP receiver
+      - "4317:4317"  # For gRPC (OTLP)
+      - "4318:4318"
     volumes:
       - ./config/otel-config.yml:/etc/otel/config.yml
     command: ["--config", "/etc/otel/config.yml"]
@@ -39,13 +43,14 @@ services:
 
   # Jaeger Service
   jaeger:
-    image: jaegertracing/all-in-one:1.26
+    image: jaegertracing/all-in-one:latest
     container_name: jaeger
     hostname: jaeger
     ports:
       - "16686:16686"  # Jaeger UI
-      - "6831:6831/udp"  # For gRPC
-      - "14268:14268"  # HTTP receiver
+      - "14250:14250"  # gRPC endpoint for trace ingestion
+      - "14268:14268"  # HTTP endpoint for trace ingestion
+      - "4317"
     networks:
       - monitoring
     restart: always
@@ -84,4 +89,4 @@ volumes:
 
 networks:
   monitoring:
-    name: monitoringnw
+    driver: bridge

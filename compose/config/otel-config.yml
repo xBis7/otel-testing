@@ -2,21 +2,47 @@ receivers:
   otlp:
     protocols:
       grpc:
+        # Use 0.0.0.0 to bind to all network interfaces
+        endpoint: "0.0.0.0:4317"
       http:
+        endpoint: "0.0.0.0:4318"
 
 exporters:
-  jaeger:
-    endpoint: "http://jaeger:14268/api/traces"
+  otlp/jaeger:
+    # We are using Jaeger's gRPC trace ingestion endpoint.
+    # For that reason the exported is 'otlp' and not 'otlphttp'.
+    # The default otlp port for the Jaeger collector is 4317, not 14250(gRPC).
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
   prometheus:
-    endpoint: "0.0.0.0:8888"
+    endpoint: "0.0.0.0:8889"
     namespace: jenkins
-    metrics_schema: "v1"
+    resource_to_telemetry_conversion:
+      enabled: true
+
+processors:
+  batch:
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [jaeger]
+      # Use gRPC-based exporter
+      exporters: [otlp/jaeger]
+      processors: [batch]
     metrics:
       receivers: [otlp]
+      # exporters: [debug, prometheus]
       exporters: [prometheus]
+      processors: [batch]
+    logs:   # Jaeger doesn't handle logs.
+      receivers: [otlp]
+      exporters: [debug]
+      processors: [batch]

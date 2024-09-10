@@ -32,7 +32,17 @@ RUN ARCH=$(uname -m) && \
     echo "JDK 8 installed for $ARCH"
 
 # Install ping utility (iputils-ping)
-RUN apt-get update && apt-get install -y iputils-ping
+RUN apt-get install -y iputils-ping
+
+# Copy the plugins.txt file under the Docker image
+COPY jenkins/plugins.txt /usr/share/jenkins/ref/plugins.txt
+
+# Install plugins using Plugin Installation Manager Tool.
+# We need to install the plugins before using the configuration-as-code file.
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+
+# Set environment variable for JCasC to load the configuration on startup
+ENV CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins-config.yml
 
 # Switch back to the Jenkins user
 USER jenkins

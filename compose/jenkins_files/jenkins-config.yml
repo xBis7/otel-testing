@@ -1,0 +1,62 @@
+jenkins:
+  systemMessage: "Jenkins configured via code"
+  numExecutors: 2
+  mode: NORMAL
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "password"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  
+  # Set global environment variables here
+  nodeProperties:
+    - envVars:
+        env:
+          - key: "OTEL_INSTRUMENTATION_JENKINS_REMOTE_SPAN_ENABLED"
+            value: "true"
+
+tool:
+  jdk:
+    installations:
+      - name: "jdk8"
+        home: "/usr/lib/jvm/temurin-8-jdk-arm64"
+  maven:
+    installations:
+      - name: "M3"  # This will be the reference name used in the pipeline
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.6.3"  # Specify the desired Maven version here
+
+
+unclassified:
+  location:
+    adminAddress: "admin@jenkins.io"
+    url: "http://localhost:8080"
+
+  openTelemetry:
+    endpoint: "http://otel-collector:4317"
+    serviceName: "jenkins"
+    serviceNamespace: "jenkins"
+    observabilityBackends:
+      - jaeger:
+          name: "jaeger"
+          jaegerBaseUrl: "http://localhost:16686"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: SYSTEM
+              id: "jenkins-user"
+              description: "Jenkins user for git"
+              username: "git-user"
+              password: "git-pass"
