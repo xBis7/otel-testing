@@ -17,3 +17,22 @@ pipelineJob('hadoop-test-custom-spans') {
     }
   }
 }
+
+pipelineJob('test-custom-spans') {
+  definition {
+    cps {
+      script(readFileFromWorkspace('/var/jenkins_home/pipelines/Jenkinsfile.test.spans'))
+      sandbox(true)
+    }
+  }
+}
+
+pipelineJob('test-spans-poc') {
+  definition {
+    cps {
+      script(readFileFromWorkspace('/var/jenkins_home/pipelines/Jenkinsfile.poc'))
+      sandbox(true)
+    }
+  }
+}
+

@@ -34,6 +34,22 @@ RUN ARCH=$(uname -m) && \
 # Install ping utility (iputils-ping)
 RUN apt-get install -y iputils-ping
 
+ARG USE_CUSTOM_JENKINS_WAR
+
+# Copy the file under the tmp so that it's available inside the container.
+COPY jenkins.war /tmp/jenkins.war
+
+# Check if the custom war file, needs to be used.
+RUN if [ "$USE_CUSTOM_JENKINS_WAR" = "true" ]; then \
+      echo "Using custom 'jenkins.war' file."; \
+      # This is a copy inside the docker container, from one location to another.
+      # It's NOT a copy from the host to the container.
+      # That's why we have to go throught the tmp copy.
+      mv /tmp/jenkins.war /usr/share/jenkins/jenkins.war; \
+    else \
+      echo "Using 'jenkins.war' from the official docker image."; \
+    fi
+
 # Copy the plugins.txt file under the Docker image
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 

@@ -35,25 +35,49 @@ node {
       }
     }
 
-    stage('Test Modules in Parallel') {
-      parallel(
-        'Test hadoop-common': {
-          dir('hadoop-common-project/hadoop-common') {
-            withMaven(maven: 'M3') {
-              // Run specific test classes in hadoop-common
-              sh 'mvn test -Dtest=TestConfigurationDeprecation,TestCommonConfigurationKeys'
-            }
-          }
-        },
-        'Test hadoop-hdfs': {
-          dir('hadoop-hdfs-project/hadoop-hdfs') {
-            withMaven(maven: 'M3') {
-              // Run specific test classes in hadoop-hdfs
-              sh 'mvn test -Dtest=TestLeaseManager,TestHDFSConstants'
-            }
+    stage('Run tests in a sequence with span attributes and without.') {
+      dir('hadoop-common-project/hadoop-common') {
+        withMaven(maven: 'M3') {
+          // Run some test classes from hadoop-common but with added attributes.
+          sh 'mvn test -Dtest=TestConfigurationDeprecation'
+
+          withSpanAttributes([
+            spanAttribute(key: 'component', value: 'hadoop-common-project'),
+            spanAttribute(key: 'directory', value: 'hadoop-common-project/hadoop-common'),
+            spanAttribute(key: 'class', value: 'TestCommonConfigurationFields'),
+            spanAttribute(key: 'command', value: 'mvn test -Dtest=TestCommonConfigurationFields')
+          ]) {
+            sh (label: 'mvn run TestCommonConfigurationFields', script: 'mvn test -Dtest=TestCommonConfigurationFields')
           }
         }
-      )
+      }
+      dir('hadoop-hdfs-project/hadoop-hdfs') {
+        withMaven(maven: 'M3') {
+          // Run some test classes from hadoop-hdfs but with added attributes.
+          withSpanAttributes([
+            spanAttribute(key: 'component', value: 'hadoop-hdfs-project'),
+            spanAttribute(key: 'directory', value: 'hadoop-hdfs-project/hadoop-hdfs'),
+            spanAttribute(key: 'class', value: 'TestLeaseManager'),
+            spanAttribute(key: 'command', value: 'mvn test -Dtest=TestLeaseManager')
+          ]) {
+            sh 'mvn test -Dtest=TestLeaseManager'
+          }
+
+          withSpanAttributes([
+            spanAttribute(key: 'component', value: 'hadoop-hdfs-project'),
+            spanAttribute(key: 'directory', value: 'hadoop-hdfs-project/hadoop-hdfs'),
+            spanAttribute(key: 'class', value: 'TestHdfsServerConstants'),
+            spanAttribute(key: 'command', value: 'mvn test -Dtest=TestHdfsServerConstants')
+          ]) {
+            sh (label: 'mvn run TestHdfsServerConstants', script: 'mvn test -Dtest=TestHdfsServerConstants')
+          }
+        }
+      }
+    }
+
+    @Library('test-lib') _
+    stage('Run tests from a shared lib.') {
+      test.runHadoopTests()
     }
 
     // If all stages succeed

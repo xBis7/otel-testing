@@ -69,6 +69,18 @@ unclassified:
             scm:
               fileSystem:
                 path: "/var/jenkins_home/shared-libraries/shared-tracing-library"
+      - name: "test-lib"
+        # Version or branch, empty since this isn't version-controlled
+        defaultVersion: "master"
+        allowVersionOverride: false
+        # This is for implicitly loading the library in all pipelines.
+        implicit: false
+        includeInChangesets: false
+        retriever:
+          legacySCM:
+            scm:
+              fileSystem:
+                path: "/var/jenkins_home/shared-libraries/test-lib"
 
 credentials:
   system:

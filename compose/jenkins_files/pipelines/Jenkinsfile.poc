@@ -1,0 +1,13 @@
+@Library('test-lib') _
+
+node {
+  stage('Build and Test') {
+    build.runHadoopBuild(false)
+    test.runHadoopTests(false)
+  }
+
+  stage('Build and Test with user-defined spans') {
+    build.runHadoopBuild(true)
+    test.runHadoopTests(true)
+  }
+}

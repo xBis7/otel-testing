@@ -1,0 +1,65 @@
+node {
+  stage('Test spans') {
+    sh (label: 'release-script', script: 'echo msg')
+
+    withNewSpan(label: 'my-custom-span-with-sub-steps') {
+      withSpanAttributes([
+        spanAttribute(key: 'component', value: 'custom-span1'),
+        spanAttribute(key: 'description', value: 'unix-cmds-using-sub-steps'),
+      ]) {
+        sh 'echo msg1'
+        sh 'echo msg2'
+      }
+    }
+
+    withNewSpan(label: 'my-custom-span') {
+      withSpanAttributes([
+        spanAttribute(key: 'component', value: 'custom-span2'),
+        spanAttribute(key: 'description', value: 'direct-unix-cmds'),
+      ]) {
+        echo 'msg1'
+        echo 'msg2'
+      }
+    }
+
+    withNewSpan(label: 'script-custom-span') {
+      withSpanAttributes([
+        spanAttribute(key: 'component', value: 'browser-echo'),
+        spanAttribute(key: 'description', value: 'check-browsers-and-echo')
+      ]) {
+        script {
+          def browsers = ['chrome', 'firefox']
+          for (int i = 0; i < browsers.size(); ++i) {
+            echo "Testing the ${browsers[i]} browser"
+          }
+        }
+      }
+    }
+
+    withNewSpan(label: 'script-custom-span-with-attributes') {
+      script {
+        def browsers = ['chrome', 'firefox']
+        for (int i = 0; i < browsers.size(); ++i) {
+          withSpanAttributes([
+            spanAttribute(key: 'component', value: 'browser-echo'),
+            spanAttribute(key: 'description', value: "curr-browser-is-${browsers[i]}")
+          ]) {
+            echo "Testing the ${browsers[i]} browser"
+          }
+        }
+      }
+    }
+
+    withNewSpan(label: 'script-custom-span-with-attributes-in-the-span', attributes: ([
+      spanAttribute(key: 'component', value: 'browser-echo'),
+      spanAttribute(key: 'description', value: 'check-browsers-and-echo')
+    ])) {
+      script {
+        def browsers = ['chrome', 'firefox']
+        for (int i = 0; i < browsers.size(); ++i) {
+          echo "Testing the ${browsers[i]} browser"
+        }
+      }
+    }
+  }
+}
