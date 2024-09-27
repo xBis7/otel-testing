@@ -1,0 +1,16 @@
+FROM apache/airflow:latest
+
+USER root
+
+COPY ./airflow_otel_provider/airflow_provider_opentelemetry /airflow_provider_opentelemetry
+
+RUN chmod -R 777 /airflow_provider_opentelemetry
+
+USER airflow
+
+# Install OpenTelemetry SDK and instrumentations
+RUN pip install opentelemetry-sdk opentelemetry-instrumentation opentelemetry-exporter-otlp
+RUN pip install pip install openlineage-airflow
+RUN pip install /airflow_provider_opentelemetry
+
+CMD ["airflow", "celery", "worker"]

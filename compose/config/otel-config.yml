@@ -16,7 +16,7 @@ exporters:
     tls:
       insecure: true
 
-  debug:
+  logging:
     verbosity: detailed
     sampling_initial: 5
     sampling_thereafter: 200
@@ -36,13 +36,10 @@ service:
       receivers: [otlp]
       # Use gRPC-based exporter
       exporters: [otlp/jaeger]
+      # exporters: [logging, otlp/jaeger]
       processors: [batch]
     metrics:
       receivers: [otlp]
-      # exporters: [debug, prometheus]
       exporters: [prometheus]
-      processors: [batch]
-    logs:   # Jaeger doesn't handle logs.
-      receivers: [otlp]
-      exporters: [debug]
+      # exporters: [logging, prometheus]
       processors: [batch]

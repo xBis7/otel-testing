@@ -1,0 +1,3 @@
+[submodule "compose/airflow_files/airflow_otel_provider"]
+	path = compose/airflow_files/airflow_otel_provider
+	url = https://github.com/howardyoo/airflow_otel_provider.git

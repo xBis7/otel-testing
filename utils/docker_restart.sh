@@ -11,7 +11,7 @@ cd compose
 docker compose down
 
 if [ "$new_images" == "true" ]; then
-  docker image rm compose-jenkins
+  docker compose build --no-cache
 fi
 
 docker compose up -d

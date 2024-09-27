@@ -5,7 +5,7 @@ FROM jenkins/jenkins:lts-jdk17
 USER root
 
 # Update the package lists
-RUN apt-get update
+RUN apt-get update && apt-get install --fix-missing -y wget gnupg2 software-properties-common
 
 # Detect system architecture and install the appropriate JDK 8 version
 RUN ARCH=$(uname -m) && \

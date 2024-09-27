@@ -37,7 +37,9 @@ services:
     hostname: otel-collector
     ports:
       - "4317:4317"  # For gRPC (OTLP)
-      - "4318:4318"
+      # - "4318:4318"
+      - "24318:4318"    # OTLP http receiver
+      - "28889:8889"    # Prometheus exporter metrics
     volumes:
       - ./config/otel-config.yml:/etc/otel/config.yml
     command: ["--config", "/etc/otel/config.yml"]
@@ -50,11 +52,16 @@ services:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
     hostname: jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+      COLLLECTOR_ZIPKIN_HOST_PORT: 9411
     ports:
       - "16686:16686"  # Jaeger UI
       - "14250:14250"  # gRPC endpoint for trace ingestion
       - "14268:14268"  # HTTP endpoint for trace ingestion
-      - "4317"
+      - "34317:4317"
+      - "34318:4318"
+      - "39422:9422"
     networks:
       - monitoring
     restart: always
@@ -87,9 +94,159 @@ services:
       - monitoring
     restart: always
 
+  # Airflow Service
+  airflow-webserver:
+    build:
+      context: ./airflow_files
+      dockerfile: Dockerfile.airflow-webserver
+    container_name: airflow-webserver
+    hostname: airflow-webserver
+    command: ["airflow", "webserver"]
+    depends_on:
+      - airflow-scheduler
+      - airflow-worker
+      - airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - AIRFLOW__METRICS__OTEL_ON=True
+      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
+      - AIRFLOW__METRICS__OTEL_PORT=4318
+      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
+      - AIRFLOW__TRACES__OTEL_ON=True
+      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
+      - AIRFLOW__TRACES__OTEL_PORT=4318
+      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
+      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
+    ports:
+      - "8081:8080"  # Airflow web UI
+    volumes:
+      - ./airflow_files/dags:/opt/airflow/dags
+      - ./airflow_files/plugins:/opt/airflow/plugins
+    networks:
+      - monitoring
+    restart: always
+
+  airflow-scheduler:
+    build:
+      context: ./airflow_files
+      dockerfile: Dockerfile.airflow-scheduler
+    container_name: airflow-scheduler
+    command: ["airflow", "scheduler"]
+    depends_on:
+      - airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
+      - AIRFLOW__METRICS__OTEL_ON=True
+      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
+      - AIRFLOW__METRICS__OTEL_PORT=4318
+      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
+      - AIRFLOW__TRACES__OTEL_ON=True
+      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
+      - AIRFLOW__TRACES__OTEL_PORT=4318
+      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
+      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
+    volumes:
+      - ./airflow_files/dags:/opt/airflow/dags
+      - ./airflow_files/plugins:/opt/airflow/plugins
+    networks:
+      - monitoring
+    restart: always
+
+  airflow-worker:
+    build:
+      context: ./airflow_files
+      dockerfile: Dockerfile.airflow-worker
+    container_name: airflow-worker
+    command: ["airflow", "celery", "worker"]
+    depends_on:
+      - airflow-scheduler
+      - airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
+      - AIRFLOW__METRICS__OTEL_ON=True
+      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
+      - AIRFLOW__METRICS__OTEL_PORT=4318
+      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
+      - AIRFLOW__TRACES__OTEL_ON=True
+      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
+      - AIRFLOW__TRACES__OTEL_PORT=4318
+      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
+      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
+    volumes:
+      - ./airflow_files/dags:/opt/airflow/dags
+      - ./airflow_files/plugins:/opt/airflow/plugins
+    networks:
+      - monitoring
+    restart: always
+
+  airflow-init:
+    image: apache/airflow:latest
+    container_name: airflow-init
+    command: ["airflow", "db", "upgrade"]
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
+      - AIRFLOW__METRICS__OTEL_ON=True
+      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
+      - AIRFLOW__METRICS__OTEL_PORT=4318
+      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
+      - AIRFLOW__TRACES__OTEL_ON=True
+      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
+      - AIRFLOW__TRACES__OTEL_PORT=4318
+      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
+      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
+    networks:
+      - monitoring
+    restart: always
+
+  # Redis Service for Celery
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - monitoring
+    restart: always
+
+  # Postgres Service for Airflow Metadata
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+    restart: always
+
 volumes:
   jenkins_home:
   grafana_data:
+  postgres_data:
 
 networks:
   monitoring:

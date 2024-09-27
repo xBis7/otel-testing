@@ -1,0 +1,54 @@
+FROM apache/airflow:latest
+
+USER root
+
+# Environment variables for user creation
+ENV _AIRFLOW_WWW_USER_USERNAME=admin \
+    _AIRFLOW_WWW_USER_PASSWORD=admin_password \
+    _AIRFLOW_WWW_USER_FIRSTNAME=Admin \
+    _AIRFLOW_WWW_USER_LASTNAME=User \
+    _AIRFLOW_WWW_USER_ROLE=Admin \
+    _AIRFLOW_WWW_USER_EMAIL=admin@example.com
+
+RUN apt-get update
+
+# Download and install grpcurl based on system architecture
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        GRPCURL_TARBALL="grpcurl_1.8.7_linux_x86_64.tar.gz"; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+        GRPCURL_TARBALL="grpcurl_1.8.7_linux_arm64.tar.gz"; \
+    else \
+        echo "Unsupported architecture: $ARCH"; exit 1; \
+    fi && \
+    curl -LO https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/$GRPCURL_TARBALL && \
+    tar -xzf $GRPCURL_TARBALL && \
+    mv grpcurl /usr/local/bin/grpcurl && \
+    rm $GRPCURL_TARBALL
+
+# Environment variables for OpenTelemetry
+# ENV OTEL_TRACES_EXPORTER=otlp
+# ENV OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+# ENV OTEL_EXPORTER_OTLP_INSECURE=true
+# ENV OTEL_SERVICE_NAME=airflow
+
+# Copy the custom entrypoint script
+COPY airflow-web-entrypoint.sh /entrypoint.sh
+COPY ./airflow_otel_provider/airflow_provider_opentelemetry /airflow_provider_opentelemetry
+
+# Ensure the script is executable
+RUN chmod +x /entrypoint.sh
+
+RUN chmod -R 777 /airflow_provider_opentelemetry
+
+USER airflow
+
+# Install OpenTelemetry SDK and instrumentations
+RUN pip install opentelemetry-sdk opentelemetry-instrumentation opentelemetry-exporter-otlp
+RUN pip install pip install openlineage-airflow
+RUN pip install /airflow_provider_opentelemetry
+
+# Use the custom entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["airflow", "webserver"]
