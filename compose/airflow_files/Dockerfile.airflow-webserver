@@ -75,7 +75,8 @@ RUN pip install debugpy
 RUN pip install /airflow_provider_opentelemetry
 
 RUN pip install pipx
-RUN pipx install -e ./dev/breeze --force
+# Don't need to setup breeze for now.
+# RUN pipx install -e ./dev/breeze --force
 
 # Use the custom entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
