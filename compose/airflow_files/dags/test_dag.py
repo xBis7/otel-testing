@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 from datetime import datetime
 from opentelemetry import trace
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
@@ -32,7 +32,7 @@ args = {
 with DAG(
     'test_dag',
     default_args=args,
-    schedule_interval=None,  # Set to None for manual triggering
+    schedule=None,  # Set to None for manual triggering
     catchup=False,  # Don't run previous DAG runs if they haven't been run before
 ) as dag:
 

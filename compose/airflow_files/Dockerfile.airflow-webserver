@@ -1,4 +1,5 @@
-FROM apache/airflow:latest
+# FROM apache/airflow:latest
+FROM airflow-sources:latest
 
 USER root
 
@@ -10,7 +11,28 @@ ENV _AIRFLOW_WWW_USER_USERNAME=admin \
     _AIRFLOW_WWW_USER_ROLE=Admin \
     _AIRFLOW_WWW_USER_EMAIL=admin@example.com
 
-RUN apt-get update
+# Update package list and install curl
+RUN apt-get update && apt-get install -y curl
+
+# Install Node.js and npm (LTS version)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs
+
+WORKDIR /opt/airflow
+
+RUN npm install -g yarn@1.22.21
+
+# We have to manually build the Airflow frontend assets. Use yarn to do that.
+WORKDIR /opt/airflow/airflow/www/
+
+RUN rm -f package-lock.json
+RUN rm -f yarn-lock.json
+
+RUN yarn install --frozen-lockfile
+RUN yarn run build
+
+# Restore the working dir
+WORKDIR /opt/airflow
 
 # Download and install grpcurl based on system architecture
 RUN ARCH=$(uname -m) && \
@@ -41,12 +63,19 @@ RUN chmod +x /entrypoint.sh
 
 RUN chmod -R 777 /airflow_provider_opentelemetry
 
+COPY ./airflow.cfg /opt/airflow/airflow.cfg
+RUN chown airflow:root /opt/airflow/airflow.cfg
+
 USER airflow
 
 # Install OpenTelemetry SDK and instrumentations
 RUN pip install opentelemetry-sdk opentelemetry-instrumentation opentelemetry-exporter-otlp
-RUN pip install pip install openlineage-airflow
+RUN pip install openlineage-airflow
+RUN pip install debugpy
 RUN pip install /airflow_provider_opentelemetry
+
+RUN pip install pipx
+RUN pipx install -e ./dev/breeze --force
 
 # Use the custom entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

@@ -6,6 +6,16 @@ from airflow_provider_opentelemetry.hooks.otel import OtelHook
 from opentelemetry import trace
 import time
 
+import debugpy
+
+# Start the debugger and listen on 0.0.0.0:5005
+# debugpy.listen(("0.0.0.0", 5005))
+# print("Waiting for debugger to attach...")
+
+# Pause execution until the debugger is attached
+# debugpy.wait_for_client()
+# print("Debugger attached. Running the application.")
+
 # Define default arguments for the DAG
 args = {
     'owner': 'airflow',
@@ -17,7 +27,7 @@ args = {
 with DAG(
     'test_dag_with_otel_hook',
     default_args=args,
-    schedule=None,  # Updated schedule_interval to schedule
+    schedule=None,
     catchup=False,
 ) as dag:
 

@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 from datetime import datetime
 
 import time
@@ -15,7 +15,7 @@ args = {
 with DAG(
     'test_dag_without_otel_code',
     default_args=args,
-    schedule_interval=None,  # Set to None for manual triggering
+    schedule=None,  # Set to None for manual triggering
     catchup=False,  # Don't run previous DAG runs if they haven't been run before
 ) as dag:
 

@@ -1,5 +1,27 @@
 version: '3.7'
 
+x-airflow-common:
+  &airflow-common
+  environment:
+    AIRFLOW__CORE__EXECUTOR: "CeleryExecutor"
+    AIRFLOW__CELERY__BROKER_URL: "redis://redis:6379/0"
+    AIRFLOW__CELERY__RESULT_BACKEND: "db+postgresql://airflow:airflow@postgres:5432/airflow"
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow"
+    AIRFLOW__CORE__FERNET_KEY: "67kYTqhoGE83KLRtd2XpEmiSYRxD7mbtsevG-Jx9MNo="
+    AIRFLOW__METRICS__OTEL_ON: "True"
+    AIRFLOW__METRICS__OTEL_HOST: "otel-collector"
+    AIRFLOW__METRICS__OTEL_PORT: "4318"
+    AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS: "30000"
+    AIRFLOW__TRACES__OTEL_ON: "True"
+    AIRFLOW__TRACES__OTEL_HOST: "otel-collector"
+    AIRFLOW__TRACES__OTEL_PORT: "4318"
+    AIRFLOW__TRACES__OTEL_DEBUGGING_ON: "False"
+    AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT: "True"
+    AIRFLOW__WEBSERVER__SECRET_KEY: "generated_secret_key"
+  networks:
+    - monitoring
+  # restart: always
+
 services:
   # Jenkins Service
   jenkins:
@@ -13,7 +35,7 @@ services:
     ports:
       - "8080:8080"
       - "50000:50000"
-      - "5005:5005"
+      - "2002:2002"
     volumes:
       - ./jenkins_files/jenkins-config.yml:/var/jenkins_home/casc_configs/jenkins-config.yml
       # Mount the entire pipeline dir.
@@ -21,7 +43,7 @@ services:
       - ./jenkins_files/shared-libraries:/var/jenkins_home/shared-libraries
       - ./jenkins_files/init.groovy.d:/var/jenkins_home/init.groovy.d
     environment:
-      JAVA_OPTS: "-Duser.timezone=Etc/UTC -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+      JAVA_OPTS: "-Duser.timezone=Etc/UTC -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:2002"
       # Path to JCasC config
       CASC_JENKINS_CONFIG: "/var/jenkins_home/casc_configs/jenkins-config.yml"
     # use user 'root' to have enough permissions for the entrypoint.sh
@@ -106,31 +128,13 @@ services:
       - airflow-scheduler
       - airflow-worker
       - airflow-init
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
-      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-      - AIRFLOW__METRICS__OTEL_ON=True
-      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
-      - AIRFLOW__METRICS__OTEL_PORT=4318
-      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
-      - AIRFLOW__TRACES__OTEL_ON=True
-      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
-      - AIRFLOW__TRACES__OTEL_PORT=4318
-      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
-      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
     ports:
-      - "8081:8080"  # Airflow web UI
+      - "8081:8080"   # Airflow web UI
+      - "3003:3003"   # Debugger
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
-    networks:
-      - monitoring
-    restart: always
+    <<: *airflow-common
 
   airflow-scheduler:
     build:
@@ -140,27 +144,12 @@ services:
     command: ["airflow", "scheduler"]
     depends_on:
       - airflow-init
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
-      - AIRFLOW__METRICS__OTEL_ON=True
-      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
-      - AIRFLOW__METRICS__OTEL_PORT=4318
-      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
-      - AIRFLOW__TRACES__OTEL_ON=True
-      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
-      - AIRFLOW__TRACES__OTEL_PORT=4318
-      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
-      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
+    ports:
+      - "4004:4004"   # Debugger
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
-    networks:
-      - monitoring
-    restart: always
+    <<: *airflow-common
 
   airflow-worker:
     build:
@@ -171,50 +160,20 @@ services:
     depends_on:
       - airflow-scheduler
       - airflow-init
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
-      - AIRFLOW__METRICS__OTEL_ON=True
-      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
-      - AIRFLOW__METRICS__OTEL_PORT=4318
-      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
-      - AIRFLOW__TRACES__OTEL_ON=True
-      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
-      - AIRFLOW__TRACES__OTEL_PORT=4318
-      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
-      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
+    ports:
+      - "5005:5005"   # Debugger
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
-    networks:
-      - monitoring
-    restart: always
+    <<: *airflow-common
 
   airflow-init:
-    image: apache/airflow:latest
+    image: airflow-sources:latest
     container_name: airflow-init
-    command: ["airflow", "db", "upgrade"]
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY
-      - AIRFLOW__METRICS__OTEL_ON=True
-      - AIRFLOW__METRICS__OTEL_HOST=otel-collector
-      - AIRFLOW__METRICS__OTEL_PORT=4318
-      - AIRFLOW__METRICS__OTEL_INTERVAL_MILLISECONDS=30000
-      - AIRFLOW__TRACES__OTEL_ON=True
-      - AIRFLOW__TRACES__OTEL_HOST=otel-collector
-      - AIRFLOW__TRACES__OTEL_PORT=4318
-      - AIRFLOW__TRACES__OTEL_DEBUGGING_ON=False
-      - AIRFLOW__TRACES__OTEL_TASK_LOG_EVENT=True
-    networks:
-      - monitoring
-    restart: always
+    command: ["airflow", "db", "migrate"]
+    volumes:
+      - ./airflow_files/airflow.cfg:/opt/airflow/airflow.cfg
+    <<: *airflow-common
 
   # Redis Service for Celery
   redis:
@@ -242,6 +201,24 @@ services:
     networks:
       - monitoring
     restart: always
+
+  # Aspire Dashboard Service
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.1.0
+    container_name: aspire-dashboard
+    hostname: aspire-dashboard
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+    ports:
+      - "18888:18888"   # Dashboard web UI
+      - "14317:18889"   # OTLP gRPC listener
+      - "14318:18890"   # OTLP HTTP listener
+    networks:
+      - monitoring
+    depends_on:
+      - otel-collector
 
 volumes:
   jenkins_home:

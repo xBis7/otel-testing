@@ -15,6 +15,16 @@ exporters:
     endpoint: "jaeger:4317"
     tls:
       insecure: true
+  
+  # Exporter to Aspire Dashboard via gRPC
+  otlp/aspire_grpc:
+    endpoint: "aspire-dashboard:18889"
+    tls:
+      insecure: true
+
+  # Exporter to Aspire Dashboard via HTTP
+  otlp/aspire_http:
+    endpoint: "http://aspire-dashboard:18890"
 
   logging:
     verbosity: detailed
@@ -35,11 +45,11 @@ service:
     traces:
       receivers: [otlp]
       # Use gRPC-based exporter
-      exporters: [otlp/jaeger]
+      exporters: [otlp/jaeger, otlp/aspire_grpc, otlp/aspire_http]
       # exporters: [logging, otlp/jaeger]
       processors: [batch]
     metrics:
       receivers: [otlp]
-      exporters: [prometheus]
+      exporters: [prometheus, otlp/aspire_grpc, otlp/aspire_http]
       # exporters: [logging, prometheus]
       processors: [batch]
