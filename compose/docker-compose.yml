@@ -130,7 +130,7 @@ services:
       - airflow-init
     ports:
       - "8081:8080"   # Airflow web UI
-      - "3003:3003"   # Debugger
+      # - "3003:3003"   # Debugger
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
@@ -144,8 +144,8 @@ services:
     command: ["airflow", "scheduler"]
     depends_on:
       - airflow-init
-    ports:
-      - "4004:4004"   # Debugger
+    # ports:
+    #   - "4004:4004"   # Debugger
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
@@ -160,8 +160,8 @@ services:
     depends_on:
       - airflow-scheduler
       - airflow-init
-    ports:
-      - "5005:5005"   # Debugger
+    # ports:
+    #   - "5005:5005"   # Debugger
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
@@ -197,7 +197,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
     networks:
       - monitoring
     restart: always

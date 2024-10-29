@@ -2,6 +2,7 @@ compose/jenkins_files/jenkins.war
 
 compose/airflow_files/plugins/__pycache__
 compose/airflow_files/dags/__pycache__
+compose/postgres_data
 
 .vscode
 .idea

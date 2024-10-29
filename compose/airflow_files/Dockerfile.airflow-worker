@@ -10,12 +10,25 @@ RUN chmod -R 777 /airflow_provider_opentelemetry
 COPY ./airflow.cfg /opt/airflow/airflow.cfg
 RUN chown airflow:root /opt/airflow/airflow.cfg
 
+RUN apt-get update && apt-get install procps -y
+
 USER airflow
 
 # Install OpenTelemetry SDK and instrumentations
-RUN pip install opentelemetry-sdk opentelemetry-instrumentation opentelemetry-exporter-otlp
-RUN pip install openlineage-airflow
-RUN pip install debugpy
+RUN pip install \
+    opentelemetry-sdk \
+    opentelemetry-api \
+    opentelemetry-instrumentation \
+    opentelemetry-exporter-otlp \
+    opentelemetry-instrumentation-requests \
+    openlineage-python \
+    dill \
+    debugpy \
+    py-spy \
+    pytest \
+    rich-click \
+    pydevd-pycharm~=242.23339.19
+
 RUN pip install /airflow_provider_opentelemetry
 
 CMD ["airflow", "celery", "worker"]
