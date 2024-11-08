@@ -120,9 +120,10 @@ services:
   airflow-webserver:
     build:
       context: ./airflow_files
-      dockerfile: Dockerfile.airflow-webserver
+      dockerfile: Dockerfile.airflow
     container_name: airflow-webserver
     hostname: airflow-webserver
+    entrypoint: ["/opt/airflow/entrypoint.sh"]
     command: ["airflow", "webserver"]
     depends_on:
       - airflow-scheduler
@@ -134,12 +135,14 @@ services:
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
+      - ./airflow_files/airflow.cfg:/opt/airflow/airflow.cfg
+      - ./airflow_files/airflow-web-entrypoint.sh:/opt/airflow/entrypoint.sh
     <<: *airflow-common
 
   airflow-scheduler:
     build:
       context: ./airflow_files
-      dockerfile: Dockerfile.airflow-scheduler
+      dockerfile: Dockerfile.airflow
     container_name: airflow-scheduler
     command: ["airflow", "scheduler"]
     depends_on:
@@ -149,12 +152,13 @@ services:
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
+      - ./airflow_files/airflow.cfg:/opt/airflow/airflow.cfg
     <<: *airflow-common
 
   airflow-worker:
     build:
       context: ./airflow_files
-      dockerfile: Dockerfile.airflow-worker
+      dockerfile: Dockerfile.airflow
     container_name: airflow-worker
     command: ["airflow", "celery", "worker"]
     depends_on:
@@ -165,10 +169,13 @@ services:
     volumes:
       - ./airflow_files/dags:/opt/airflow/dags
       - ./airflow_files/plugins:/opt/airflow/plugins
+      - ./airflow_files/airflow.cfg:/opt/airflow/airflow.cfg
     <<: *airflow-common
 
   airflow-init:
-    image: airflow-sources:latest
+    build:
+      context: ./airflow_files
+      dockerfile: Dockerfile.airflow
     container_name: airflow-init
     command: ["airflow", "db", "migrate"]
     volumes:

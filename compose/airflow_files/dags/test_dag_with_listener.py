@@ -3,7 +3,6 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.utils.types import DagRunTriggeredByType
 from datetime import datetime
-from airflow_provider_opentelemetry.hooks.otel import OtelHook
 from opentelemetry import trace
 import time
 

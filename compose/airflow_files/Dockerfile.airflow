@@ -1,7 +1,9 @@
-# FROM apache/airflow:latest
-FROM airflow-sources:latest
+FROM apache/airflow:2.10.3
 
 USER root
+
+# Copy your modified Airflow source code into the image
+COPY airflow_src /tmp/airflow_src
 
 # Environment variables for user creation
 ENV _AIRFLOW_WWW_USER_USERNAME=admin \
@@ -18,20 +20,6 @@ RUN apt-get update && apt-get install -y curl
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs
 
-WORKDIR /opt/airflow
-
-RUN npm install -g yarn@1.22.21
-
-# We have to manually build the Airflow frontend assets. Use yarn to do that.
-WORKDIR /opt/airflow/airflow/www/
-
-RUN rm -f package-lock.json
-RUN rm -f yarn-lock.json
-
-RUN yarn install --frozen-lockfile
-RUN yarn run build
-
-# Restore the working dir
 WORKDIR /opt/airflow
 
 # Download and install grpcurl based on system architecture
@@ -54,23 +42,53 @@ RUN ARCH=$(uname -m) && \
 # ENV OTEL_EXPORTER_OTLP_INSECURE=true
 # ENV OTEL_SERVICE_NAME=airflow
 
-# Copy the custom entrypoint script
-COPY airflow-web-entrypoint.sh /entrypoint.sh
-COPY ./airflow_otel_provider/airflow_provider_opentelemetry /airflow_provider_opentelemetry
-
-# Ensure the script is executable
-RUN chmod +x /entrypoint.sh
-
-RUN chmod -R 777 /airflow_provider_opentelemetry
-
-COPY ./airflow.cfg /opt/airflow/airflow.cfg
-RUN chown airflow:root /opt/airflow/airflow.cfg
-
 RUN apt-get update && apt-get install procps -y
 
 USER airflow
 
-# Install OpenTelemetry SDK and instrumentations
+# Uninstall existing Airflow installation
+RUN pip uninstall -y apache-airflow
+
+# Install the custom Airflow from the source code
+RUN pip install --no-deps /tmp/airflow_src
+
+USER root
+
+# Copying, only so that we can use the code to build the frontend assets.
+RUN cp -r /tmp/airflow_src/* /opt/airflow/
+
+# Clean up the source code directory
+RUN rm -rf /tmp/airflow_src
+
+# current WORKDIR is /opt/airflow
+
+# We have to manually build the Airflow frontend assets. Use yarn to do that.
+RUN npm install -g yarn@1.22.21
+
+WORKDIR /opt/airflow/airflow/www/
+
+RUN rm -f package-lock.json
+RUN rm -f yarn-lock.json
+
+RUN yarn install --frozen-lockfile
+RUN yarn run build
+
+# Restore the working dir
+WORKDIR /opt/airflow
+
+# The copy was made as root. Change ownership of /opt/airflow/ to avoid permission errors.
+RUN chown -R airflow:root /opt/airflow
+
+# airflow_otel_provider
+# COPY ./airflow_otel_provider/airflow_provider_opentelemetry /airflow_provider_opentelemetry
+# RUN chmod -R 777 /airflow_provider_opentelemetry
+
+USER airflow
+
+# Ensure the local bin is in PATH
+ENV PATH=$HOME/.local/bin:$PATH
+
+# Install OpenTelemetry SDK and other packages
 RUN pip install \
     opentelemetry-sdk \
     opentelemetry-api \
@@ -85,13 +103,7 @@ RUN pip install \
     rich-click \
     pydevd-pycharm~=242.23339.19
 
-RUN pip install /airflow_provider_opentelemetry
+# airflow_otel_provider
+# RUN pip install /airflow_provider_opentelemetry
 
 RUN pip install pipx
-# Don't need to setup breeze for now.
-# RUN pipx install -e ./dev/breeze --force
-
-# Use the custom entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
-
-CMD ["airflow", "webserver"]
