@@ -126,7 +126,8 @@ services:
     entrypoint: ["/opt/airflow/entrypoint.sh"]
     command: ["airflow", "webserver"]
     depends_on:
-      - airflow-scheduler
+      - airflow-scheduler1
+      - airflow-scheduler2
       - airflow-worker
       - airflow-init
     ports:
@@ -139,11 +140,27 @@ services:
       - ./airflow_files/airflow-web-entrypoint.sh:/opt/airflow/entrypoint.sh
     <<: *airflow-common
 
-  airflow-scheduler:
+  airflow-scheduler1:
     build:
       context: ./airflow_files
       dockerfile: Dockerfile.airflow
-    container_name: airflow-scheduler
+    container_name: airflow-scheduler1
+    command: ["airflow", "scheduler"]
+    depends_on:
+      - airflow-init
+    # ports:
+    #   - "4004:4004"   # Debugger
+    volumes:
+      - ./airflow_files/dags:/opt/airflow/dags
+      - ./airflow_files/plugins:/opt/airflow/plugins
+      - ./airflow_files/airflow.cfg:/opt/airflow/airflow.cfg
+    <<: *airflow-common
+
+  airflow-scheduler2:
+    build:
+      context: ./airflow_files
+      dockerfile: Dockerfile.airflow
+    container_name: airflow-scheduler2
     command: ["airflow", "scheduler"]
     depends_on:
       - airflow-init
@@ -162,7 +179,8 @@ services:
     container_name: airflow-worker
     command: ["airflow", "celery", "worker"]
     depends_on:
-      - airflow-scheduler
+      - airflow-scheduler1
+      - airflow-scheduler2
       - airflow-init
     # ports:
     #   - "5005:5005"   # Debugger

@@ -2,12 +2,12 @@ from airflow.decorators import dag, task
 from airflow.traces import otel_tracer
 from airflow.traces.tracer import Trace
 
-from opentelemetry.trace import Link
+from opentelemetry.trace import Link, NonRecordingSpan
 
 import pendulum
 
 import logging
-from pprint import pformat,pprint
+from pprint import pformat, pprint
 
 # get the airflow.task logger
 task_logger = logging.getLogger("airflow.task")
@@ -15,35 +15,43 @@ task_logger = logging.getLogger("airflow.task")
 # get the Open Telemetry hook
 otel_airflow_tracer = otel_tracer.get_otel_tracer_for_task(Trace)
 
+
 @task(task_id="alpha")
 def alpha_impl(**context):
     task_logger.info("Starting alpha_impl")
     pprint(context)
 
-    carrier = None
-    with otel_airflow_tracer.start_root_span(span_name="a_root") as root_s:
-        carrier = otel_airflow_tracer.inject()
+    root_carrier = None
+    with otel_airflow_tracer.start_root_span(span_name="root") as root_s:
+        root_carrier = otel_airflow_tracer.inject()
+        print("hi_root")
 
-    root_ctx = otel_airflow_tracer.extract(carrier)
+    root_ctx = otel_airflow_tracer.extract(root_carrier)
 
-    child_start_carrier = None
+    start_carrier = None
     with otel_airflow_tracer.start_child_span(span_name="start", parent_context=root_ctx) as start_s:
-        child_start_carrier = otel_airflow_tracer.inject()
-        print("hi_start")
+        start_carrier = otel_airflow_tracer.inject()
+        print("hi_root")
 
-    with otel_airflow_tracer.start_child_span(span_name="task1", parent_context=root_ctx) as task1_s:
+    start_ctx = otel_airflow_tracer.extract(start_carrier)
+
+    with otel_airflow_tracer.start_child_span(span_name="task1", parent_context=start_ctx) as task1_s:
         for i in range(3):
-          print("Task_1, iteration '%d'.", i)
+            print("Task_1, iteration '%d'.", i)
         print("hi_task1")
 
-    with otel_airflow_tracer.start_child_span(span_name="task2", parent_context=root_ctx) as task2_s:
+    with otel_airflow_tracer.start_child_span(span_name="task2", parent_context=start_ctx) as task2_s:
         for i in range(5):
-          print("Task_2, iteration '%d'.", i)
+            print("Task_2, iteration '%d'.", i)
         print("hi_task2")
 
-    child_start_ctx = otel_airflow_tracer.extract(child_start_carrier)
+    context_val = next(iter(start_ctx.values()))
+    child_span_context = None
+    if isinstance(context_val, NonRecordingSpan):
+        child_span_context = context_val.get_span_context()
+
     links = []
-    link = Link(context=child_start_ctx)
+    link = Link(context=child_span_context)
     links.append(link)
     with otel_airflow_tracer.start_child_span(span_name="end", parent_context=root_ctx, links=links) as end_s:
         print("hi_end")
@@ -55,13 +63,6 @@ def beta_impl(**context):
 
     task_logger.info("Starting beta_impl")
     pprint(context)
-
-    otel_tracer_provider = otel_airflow_tracer.get_otel_tracer_provider()
-
-    # If we want to hook up library instrumentation we have to connect the tracer provider like this
-    # It needs the instrumentation library to be installed though. 
-    from opentelemetry.instrumentation.requests import RequestsInstrumentor
-    RequestsInstrumentor().instrument(tracer_provider=otel_tracer_provider)
 
     # Get the task instance from the dag context.
     ti = context["ti"]
@@ -85,8 +86,9 @@ def beta_impl(**context):
         with otel_airflow_tracer.start_child_span(span_name="get_version") as ss:
             response = requests.get("https://api.github.com/users/xBis7/repos")
             task_logger.info("Response: %s", response.json())
-            
+
             ss.set_attribute("test.version_response", pformat(response.json()))
+
 
 @dag(
     schedule=None,
@@ -94,10 +96,11 @@ def beta_impl(**context):
     catchup=False,
     tags=["test"],
 )
-def gr_working_trace_test_new_impl():
+def test_dag_with_links():
     alpha_task = alpha_impl()
     beta_task = beta_impl()
 
     alpha_task >> beta_task
 
-gr_working_trace_test_new_impl()
+
+test_dag_with_links()

@@ -17,8 +17,5 @@ else
     echo "User $_AIRFLOW_WWW_USER_USERNAME already exists."
 fi
 
-# Instrument Airflow with OpenTelemetry
-# opentelemetry-instrument airflow webserver
-
 # Start the webserver
 exec "$@"

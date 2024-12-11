@@ -15,6 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 from airflow.traces import otel_tracer
 
 from airflow import DAG
@@ -42,41 +44,95 @@ with DAG(
 
     # Task functions
     def task_1_func(**dag_context):
-        print(f"dag_context: {dag_context}")
+      logger = logging.getLogger("airflow.test_dag")
 
-        current_context0 = trace.get_current_span().get_span_context()
+      logger.info("Starting Task_1.")
 
-        ti = dag_context["ti"]
+      ti = dag_context["ti"]
+      context_carrier = ti.context_carrier
 
-        otel_airflow_tracer = otel_tracer.get_otel_tracer_for_task(Trace)
-        context_carrier = ti.context_carrier
+      dag_folder = os.path.dirname(os.path.abspath(__file__))
+      control_file = os.path.join(dag_folder, "dag_control.txt")
 
-        # with otel_airflow_tracer.start_root_span(span_name=f"{ti.task_id}_span_from_inside_without_x", component="dag_x") as s:
-        #   print(f"xbis: context from current_context")
-        #   print("halo")
+      # Create the file and write 'pause' to it.
+      with open(control_file, "w") as file:
+          file.write("pause")
 
-        tracer_provider = otel_airflow_tracer.get_otel_tracer_provider()
+      # Pause execution until the word 'pause' is replaced on the file.
+      while True:
+          # If there is an exception, then writing to the file failed. Let it exit.
+          file_contents = None
+          with open(control_file) as file:
+              file_contents = file.read()
 
-        if context_carrier is not None:
-            parent_context = Trace.extract(context_carrier)
-            with otel_airflow_tracer.start_child_span(span_name=f"{ti.task_id}_sub_span1{CTX_PROP_SUFFIX}",
-                                          parent_context=parent_context, component=f"dag{CTX_PROP_SUFFIX}") as s1:
-                print(f"xbis: context: {parent_context}")
-                print("halo")
+          if "pause" in file_contents:
+              logger.info("Task has been paused.")
+              continue
+          else:
+              logger.info("Resuming task execution.")
+              # Break the loop and finish with the task execution.
+              break
 
-                with otel_airflow_tracer.start_child_span(f"{ti.task_id}_sub_span2{CTX_PROP_SUFFIX}") as s2:
-                    print("halo2")
+      otel_task_tracer = otel_tracer.get_otel_tracer_for_task(Trace)
+      tracer_provider = otel_task_tracer.get_otel_tracer_provider()
 
-                    tracer = trace.get_tracer("trace_test.tracer", tracer_provider=tracer_provider)
-                    with tracer.start_as_current_span(name=f"{ti.task_id}_sub_span3{CTX_PROP_SUFFIX}") as s3:
-                        print("halo3")
-            with otel_airflow_tracer.start_child_span(span_name=f"{ti.task_id}_sub_span4{CTX_PROP_SUFFIX}",
-                                                      parent_context=parent_context, component=f"dag{CTX_PROP_SUFFIX}") as s4:
-                print("halo4")
+      if context_carrier is not None:
+          logger.info("Found ti.context_carrier: %s.", context_carrier)
+          logger.info("Extracting the span context from the context_carrier.")
 
-        print(f"xbis: context_carrier: {context_carrier}")
+          # If the task takes too long to execute, then the ti should be read from the db
+          # to make sure that the initial context_carrier is the same.
+          with create_session() as session:
+              session_ti: TaskInstance = session.scalars(
+                  select(TaskInstance).where(
+                      TaskInstance.task_id == ti.task_id,
+                      TaskInstance.run_id == ti.run_id,
+                  )
+              ).one()
+          context_carrier = session_ti.context_carrier
 
-        print(f"curr_t_id: {current_context0.trace_id} | curr_s_id: {current_context0.span_id}")
+          parent_context = Trace.extract(context_carrier)
+          with otel_task_tracer.start_child_span(
+              span_name=f"{ti.task_id}_sub_span1{CTX_PROP_SUFFIX}",
+              parent_context=parent_context,
+              component=f"dag{CTX_PROP_SUFFIX}",
+          ) as s1:
+              s1.set_attribute("attr1", "val1")
+              logger.info("From task sub_span1.")
+
+              with otel_task_tracer.start_child_span(f"{ti.task_id}_sub_span2{CTX_PROP_SUFFIX}") as s2:
+                  s2.set_attribute("attr2", "val2")
+                  logger.info("From task sub_span2.")
+
+                  tracer = trace.get_tracer("trace_test.tracer", tracer_provider=tracer_provider)
+                  with tracer.start_as_current_span(name=f"{ti.task_id}_sub_span3{CTX_PROP_SUFFIX}") as s3:
+                      s3.set_attribute("attr3", "val3")
+                      logger.info("From task sub_span3.")
+
+          with create_session() as session:
+              session_ti: TaskInstance = session.scalars(
+                  select(TaskInstance).where(
+                      TaskInstance.task_id == ti.task_id,
+                      TaskInstance.run_id == ti.run_id,
+                  )
+              ).one()
+          context_carrier = session_ti.context_carrier
+          parent_context = Trace.extract(context_carrier)
+
+          with otel_task_tracer.start_child_span(
+              span_name=f"{ti.task_id}_sub_span4{CTX_PROP_SUFFIX}",
+              parent_context=parent_context,
+              component=f"dag{CTX_PROP_SUFFIX}",
+          ) as s4:
+              s4.set_attribute("attr4", "val4")
+              logger.info("From task sub_span4.")
+
+      # Cleanup the control file.
+      if os.path.exists(control_file):
+          os.remove(control_file)
+          print("Control file has been cleaned up.")
+
+      logger.info("Task_1 finished.")
 
     def task_2_func(task_id, carrier):
         import ast

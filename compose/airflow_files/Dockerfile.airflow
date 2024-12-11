@@ -2,7 +2,7 @@ FROM apache/airflow:2.10.3
 
 USER root
 
-# Copy your modified Airflow source code into the image
+# Copy the Airflow source code under the image
 COPY airflow_src /tmp/airflow_src
 
 # Environment variables for user creation
@@ -46,10 +46,10 @@ RUN apt-get update && apt-get install procps -y
 
 USER airflow
 
-# Uninstall existing Airflow installation
+# Uninstall existing Airflow installation (from the official docker image)
 RUN pip uninstall -y apache-airflow
 
-# Install the custom Airflow from the source code
+# Install Airflow from the source code
 RUN pip install --no-deps /tmp/airflow_src
 
 USER root
@@ -57,7 +57,7 @@ USER root
 # Copying, only so that we can use the code to build the frontend assets.
 RUN cp -r /tmp/airflow_src/* /opt/airflow/
 
-# Clean up the source code directory
+# Clean up the source code directory under tmp
 RUN rm -rf /tmp/airflow_src
 
 # current WORKDIR is /opt/airflow

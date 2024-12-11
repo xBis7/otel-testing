@@ -12,3 +12,7 @@ docker image rm compose-airflow-webserver
 docker image rm compose-airflow-scheduler
 
 cp -f -R "$abs_path/$AIRFLOW_PROJECT/." "$abs_path/$CURRENT_PROJECT/compose/airflow_files/airflow_src"
+
+cd "$abs_path/$CURRENT_PROJECT"
+
+./utils/docker_restart.sh "false"
