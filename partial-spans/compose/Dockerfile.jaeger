@@ -1,0 +1,14 @@
+FROM alpine:latest AS prep
+RUN apk --update add ca-certificates
+
+FROM scratch
+
+ARG USER_UID=10001
+ARG USER_GID=10001
+USER ${USER_UID}:${USER_GID}
+
+COPY --chmod=755 ./compose/go-binaries/jaeger_bin /go/bin/all-in-one
+
+VOLUME ["/tmp"]
+ENTRYPOINT ["/go/bin/all-in-one"]
+

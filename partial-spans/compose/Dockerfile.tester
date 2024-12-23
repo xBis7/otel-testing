@@ -1,0 +1,23 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# Install git.
+# RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Clone the fork under /app/opentelemetry-python.
+# RUN git clone https://github.com/xBis7/opentelemetry-python.git /app/opentelemetry-python
+
+# Check out to branch 'dev'.
+# WORKDIR /app/opentelemetry-python
+# RUN git fetch origin && git checkout dev
+
+# COPY -r ../../../opentelemetry-python ./
+
+# Restore the working dir.
+WORKDIR /app/otel-test
+
+COPY ../otel-test/requirements.txt ./
+
+# This will install packages from the cloned otel fork.
+# RUN pip install --no-cache-dir -r requirements.txt

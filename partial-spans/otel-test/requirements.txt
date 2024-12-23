@@ -1,0 +1,11 @@
+-e /app/opentelemetry-python/exporter/opentelemetry-exporter-otlp
+-e /app/opentelemetry-python/exporter/opentelemetry-exporter-otlp-proto-common
+-e /app/opentelemetry-python/exporter/opentelemetry-exporter-otlp-proto-grpc
+-e /app/opentelemetry-python/exporter/opentelemetry-exporter-otlp-proto-http
+-e /app/opentelemetry-python/opentelemetry-api
+-e /app/opentelemetry-python/opentelemetry-proto
+-e /app/opentelemetry-python/opentelemetry-sdk
+-e /app/opentelemetry-python/opentelemetry-semantic-conventions
+
+requests
+python-dotenv
