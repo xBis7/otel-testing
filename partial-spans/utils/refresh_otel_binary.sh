@@ -58,6 +58,9 @@ fi
 # Check if the file exists.
 if find "$source_bin_path" -type f | grep -E "/$source_bin_name$"; then
   echo "Otel binary '$source_bin_name' exists. Copying over..."
+  # go-binaries might be missing.
+  mkdir -p "$abs_path"/"$CURRENT_PROJECT"/partial-spans/compose/go-binaries
+
   cp "$source_bin_path" "$abs_path"/"$CURRENT_PROJECT"/partial-spans/compose/go-binaries/otel_col_bin
 else
   echo "Can't copy the otel binary because it doesn't exist."
