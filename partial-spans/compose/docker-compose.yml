@@ -12,7 +12,7 @@ services:
     container_name: tester
     hostname: tester
     volumes:
-      - ./entrypoint.sh:/app/entrypoint.sh
+      - ./tester-entrypoint.sh:/app/entrypoint.sh
       - ../otel-test:/app/otel-test
       - ../../../opentelemetry-python:/app/opentelemetry-python
     entrypoint: ["/app/entrypoint.sh"]
@@ -51,6 +51,7 @@ services:
     hostname: jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: true
+      COLLECTOR_ENABLE_SPAN_OVERWRITE: true
       COLLLECTOR_ZIPKIN_HOST_PORT: 9411
     ports:
       - "16686:16686"  # Jaeger UI

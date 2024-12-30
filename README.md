@@ -1,11 +1,7 @@
-## Setup
 
-### Initialize the submodules
+All scripts should be executed from the project root.
 
-```bash
-git submodule init
-git submodule update
-```
+## jenkins-airflow
 
 ### Jenkins
 
@@ -14,7 +10,7 @@ We can conditionally check if we need to run jenkins from a war file but we have
 Generate the war file
 
 ```bash
-./utils/get_custom_jenkins_war.sh /path/to/projects
+./jenkins-airflow/utils/get_custom_jenkins_war.sh /path/to/projects
 ```
 
 ### Airflow
@@ -22,5 +18,9 @@ Generate the war file
 Build all images
 
 ```bash
-./utils/build_airflow.sh /path/to/projects
+./jenkins-airflow/utils/build_airflow.sh /path/to/projects
 ```
+
+## partial-spans
+
+

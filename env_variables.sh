@@ -1,13 +1,20 @@
 #!/bin/bash
 
+# Commit SHAs
+JAEGER_COMMIT_SHA="66bb297f03127bc2a7c1d63a2f7d0654d92f4ee4"
+OTEL_CORE_COMMIT_SHA="e23802a27ef19cbc8e83e0795b84276272dde18f"
+OTEL_CONTRIB_COMMIT_SHA="bc3d400ee110fa5ecef11502b2ba57f5975ba0cf"
+OTEL_PYTHON_SDK_COMMIT_SHA="773b94e3f9e1f6ecef08528f46b3be8d8725ed11"
+
 # Projects
 CURRENT_PROJECT="otel-testing"
 JENKINS_PROJECT="jenkins"
-OTEL_PLUGIN_PROJECT="opentelemetry-plugin"
 AIRFLOW_PROJECT="airflow"
+JAEGER_PROJECT="jaeger"
+OTEL_PLUGIN_PROJECT="opentelemetry-plugin"
 OTEL_CORE_PROJECT="opentelemetry-collector"
 OTEL_CONTRIB_PROJECT="opentelemetry-collector-contrib"
-JAEGER_PROJECT="jaeger"
+OTEL_PYTHON_SDK_PROJECT="opentelemetry-python"
 
 # Hostnames
 JENKINS_HOSTNAME="jenkins"
