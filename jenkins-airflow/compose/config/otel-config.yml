@@ -46,10 +46,10 @@ service:
       receivers: [otlp]
       # Use gRPC-based exporter
       exporters: [otlp/jaeger, otlp/aspire_grpc, otlp/aspire_http]
-      # exporters: [logging, otlp/jaeger]
+      # exporters: [debug, otlp/jaeger]
       processors: [batch]
     metrics:
       receivers: [otlp]
       exporters: [prometheus, otlp/aspire_grpc, otlp/aspire_http]
-      # exporters: [logging, prometheus]
+      # exporters: [debug, prometheus]
       processors: [batch]

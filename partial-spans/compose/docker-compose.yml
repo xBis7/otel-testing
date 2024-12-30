@@ -64,34 +64,6 @@ services:
       - monitoring
     restart: always
 
-  # Prometheus Service
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    hostname: prometheus
-    volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - monitoring
-    restart: always
-
-  # Grafana Service
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    hostname: grafana
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    networks:
-      - monitoring
-    restart: always
-
   # Aspire Dashboard Service
   aspire-dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:8.1.0
@@ -107,11 +79,6 @@ services:
       - "14318:18890"   # OTLP HTTP listener
     networks:
       - monitoring
-    depends_on:
-      - otel-collector
-
-volumes:
-  grafana_data:
 
 networks:
   monitoring:
