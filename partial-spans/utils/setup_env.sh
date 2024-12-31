@@ -5,16 +5,18 @@ set -e
 source "./lib.sh"
 
 abs_path=$1
-github_user=$2
-github_remote_user=$3   # 'origin' if current user is also the remote user.
+github_user=${2:-"-"}
+github_remote_user=${3:-"-"}  # 'origin' if current user is also the remote user.
 arch=${4:-"arm64"}
 initial_setup=${5:-"false"}
 project=${6:-"core"}
 
 # The 'tester' container is installing the otel sdk from the opentelemetry-python source code.
 # It needs to be locally installed.
-cloneProjectIfNotExist "$abs_path" "$OTEL_PYTHON_SDK_PROJECT" "$github_user"
-checkoutToProjectCommit "$abs_path" "$OTEL_PYTHON_SDK_PROJECT" "$github_remote_user" "$OTEL_PYTHON_SDK_COMMIT_SHA"
+if [[ "$github_user" != "-" && "$github_remote_user" != "-" ]]; then
+  cloneProjectIfNotExist "$abs_path" "$OTEL_PYTHON_SDK_PROJECT" "$github_user"
+  checkoutToProjectCommit "$abs_path" "$OTEL_PYTHON_SDK_PROJECT" "$github_remote_user" "$OTEL_PYTHON_SDK_COMMIT_SHA"
+fi
 
 # Restore the working dir.
 cd "$abs_path"/"$CURRENT_PROJECT"

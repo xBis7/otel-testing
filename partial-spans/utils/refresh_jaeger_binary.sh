@@ -5,14 +5,16 @@ set -e
 source "./lib.sh"
 
 abs_path=$1
-github_user=$2
-github_remote_user=$3   # 'origin' if current user is also the remote user.
+github_user=${2:-"-"}
+github_remote_user=${3:-"-"}   # 'origin' if current user is also the remote user.
 arch=${4:-"arm64"}
 initial_setup=${5:-"false"}
 
-# Check if the project exists, clone and checkout to the correct commit SHA if needed.
-cloneProjectIfNotExist "$abs_path" "$JAEGER_PROJECT" "$github_user"
-checkoutToProjectCommit "$abs_path" "$JAEGER_PROJECT" "$github_remote_user" "$JAEGER_COMMIT_SHA"
+if [[ "$github_user" != "-" && "$github_remote_user" != "-" ]]; then
+  # Check if the project exists, clone and checkout to the correct commit SHA if needed.
+  cloneProjectIfNotExist "$abs_path" "$JAEGER_PROJECT" "$github_user"
+  checkoutToProjectCommit "$abs_path" "$JAEGER_PROJECT" "$github_remote_user" "$JAEGER_COMMIT_SHA"
+fi
 
 cd "$abs_path"/"$JAEGER_PROJECT"
 
