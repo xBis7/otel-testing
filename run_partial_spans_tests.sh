@@ -22,4 +22,4 @@ if [ "$setup" == "true" ]; then
 fi
 
 cmd="python test_partial_spans.py"
-./partial-spans/utils/exec_in_tester.sh "$cmd"
+./partial-spans/utils/exec_in_python_tester.sh "$cmd"

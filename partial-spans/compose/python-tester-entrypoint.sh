@@ -15,7 +15,7 @@ source /app/venv/bin/activate
 # Checking if an .egg-link or .dist-info folder exists can be a quick check
 if [ ! -f "/app/venv/lib/python3.13/site-packages/opentelemetry-api.egg-link" ]; then
   echo "Installing local opentelemetry-python in editable mode..."
-  pip install --no-cache-dir -r /app/otel-test/requirements.txt
+  pip install --no-cache-dir -r /app/otel-python-test/requirements.txt
 fi
 
 exec "$@"

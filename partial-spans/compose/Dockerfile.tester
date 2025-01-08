@@ -1,8 +1,0 @@
-FROM python:3.13-slim
-
-WORKDIR /app
-
-# Restore the working dir.
-WORKDIR /app/otel-test
-
-COPY ../otel-test/requirements.txt ./

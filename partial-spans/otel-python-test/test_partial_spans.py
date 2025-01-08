@@ -34,37 +34,7 @@ def long_lived_spans(sdk_provider: SdkProvider):
 
     span.end()
 
-def long_lived_spans_with_periodic_export(sdk_provider: SdkProvider):
-    span = sdk_provider.start_root_span(span_name="long_lived_spans_with_periodic_export", start_as_current=False)
-    print("===============")
-    print(span.end_time)
-    print("===============")
-    sdk_provider.span_processor.periodic_export()
-    root_carrier = sdk_provider.inject()
-    parent_ctx = sdk_provider.extract(root_carrier)
-
-    for counter in range(3):
-        with sdk_provider.start_child_span(
-                span_name=f"periodic_export_sub_span{counter}",
-                parent_context=parent_ctx) as s:
-            s.set_attribute("sub_span_num", counter)
-            print(f"Unfinished function, sub-span-{counter}")
-        time.sleep(20)
-        sdk_provider.span_processor.periodic_export()
-
-    span.set_attribute("who", "x")
-
-    span.end()
-    sdk_provider.span_exporter.export((span,))
-    sdk_provider.span_exporter.export((span,))
-    sdk_provider.span_exporter.export((span,))
-    sdk_provider.span_processor.periodic_export()
-    print("===============")
-    print(span)
-    print("===============")
-
 if __name__ == "__main__":
     sdk_provider = get_sdk_instance(use_simple_processor=True)
     short_lived_spans(sdk_provider)
     long_lived_spans(sdk_provider)
-    long_lived_spans_with_periodic_export(sdk_provider)

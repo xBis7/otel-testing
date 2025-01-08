@@ -26,7 +26,7 @@ class SdkProvider:
             self.span_processor = BatchSpanProcessor(self.span_exporter)
 
         self.resource = Resource.create(
-            attributes={HOST_NAME: socket.gethostname(), SERVICE_NAME: "tester"}
+            attributes={HOST_NAME: socket.gethostname(), SERVICE_NAME: "python-tester"}
         )
 
     def get_otel_tracer_provider(self) -> TracerProvider:
