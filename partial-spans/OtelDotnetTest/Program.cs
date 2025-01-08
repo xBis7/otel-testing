@@ -3,10 +3,15 @@ namespace OtelDotnetTest;
 
 public class Program
 {
+    public static readonly string ServiceName = "Dotnet.Tester";
+    public static readonly string ServiceVersion = "1.0.0";
+
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
-        var sdkProvider = new OtelSdkProvider();
-        sdkProvider.Run();
+        // var sdkShimProvider = new OtelSdkShimProvider();
+        // sdkShimProvider.Execute();
+
+        var otelSdProvider = new OtelSystemDiagnosticsProvider();
+        otelSdProvider.Execute();
     }
 }
