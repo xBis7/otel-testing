@@ -24,27 +24,27 @@ services:
     networks:
       - monitoring
 
-#  dotnet-tester:
-#    build:
-#      # If we change the context to the project root, then the Dockerfile
-#      # will be able to see files from other directories under the project.
-#      # The Dockerfile only sees files from the same context.
-#      context: ..
-#      dockerfile: compose/Dockerfile.dotnet-tester
-#    container_name: dotnet-tester
-#    hostname: dotnet-tester
-#    volumes:
-#      - ./dotnet-tester-entrypoint.sh:/app/entrypoint.sh
-#      - ../otel-dotnet-test:/app/otel-dotnet-test
-#      - ../../../opentelemetry-dotnet:/app/opentelemetry-dotnet
-#    entrypoint: ["/app/entrypoint.sh"]
-#    command: ["tail", "-f", "/dev/null"]
-#    environment:
-#      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
-#    depends_on:
-#      - otel-collector
-#    networks:
-#      - monitoring
+  dotnet-tester:
+    build:
+      # If we change the context to the project root, then the Dockerfile
+      # will be able to see files from other directories under the project.
+      # The Dockerfile only sees files from the same context.
+      context: ..
+      dockerfile: compose/Dockerfile.dotnet-tester
+    container_name: dotnet-tester
+    hostname: dotnet-tester
+    volumes:
+      - ./dotnet-tester-entrypoint.sh:/app/entrypoint.sh
+      - ../OtelDotnetTest:/app/OtelDotnetTest
+      - ../../../opentelemetry-dotnet:/app/opentelemetry-dotnet
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+    depends_on:
+      - otel-collector
+    networks:
+      - monitoring
 
   # OpenTelemetry Collector Service
   otel-collector:
