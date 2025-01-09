@@ -9,9 +9,9 @@ public class Program
     static void Main(string[] args)
     {
         // var sdkShimProvider = new OtelSdkShimProvider();
-        // sdkShimProvider.Execute();
+        // sdkShimProvider.ExecuteWithConsoleExporter();
 
         var otelSdProvider = new OtelSystemDiagnosticsProvider();
-        otelSdProvider.Execute();
+        otelSdProvider.ExecuteWithOtlpExporter();
     }
 }

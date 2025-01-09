@@ -21,7 +21,7 @@ public class OtelSdkShimProvider
         _tracer = tracerProvider.GetTracer(Program.ServiceName);
     }
 
-    public void Execute()
+    public void ExecuteWithConsoleExporter()
     {
         using var parentSpan = _tracer.StartActiveSpan("parent-span");
 

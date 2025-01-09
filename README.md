@@ -26,7 +26,7 @@ Build all images
 After cloning the repo, run this
 
 ```bash
-./run_partial_spans_tests.sh /path/to/projects true <your_username> <remote_repo_or_username_to_pull_from>
+./run_partial_spans_tests.sh /path/to/projects all true <your_username> <remote_repo_or_username_to_pull_from>
 ```
 
 it sets up the projects locally and runs all scripts for partial-spans. It should succeed.
