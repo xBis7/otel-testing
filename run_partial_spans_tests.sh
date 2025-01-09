@@ -18,7 +18,7 @@ if [ "$setup" == "true" ]; then
 
   # Wait for the venv setup to finish.
   # TODO: run the cmd with a repeat counter, instead of a sleep?
-  sleep 25
+  sleep 35
 fi
 
 cmd="python test_partial_spans.py"

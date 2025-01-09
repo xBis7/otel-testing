@@ -25,14 +25,10 @@ services:
       - monitoring
 
   dotnet-tester:
-    build:
-      # If we change the context to the project root, then the Dockerfile
-      # will be able to see files from other directories under the project.
-      # The Dockerfile only sees files from the same context.
-      context: ..
-      dockerfile: compose/Dockerfile.dotnet-tester
+    image: mcr.microsoft.com/dotnet/sdk:9.0
     container_name: dotnet-tester
     hostname: dotnet-tester
+    working_dir: /app
     volumes:
       - ./dotnet-tester-entrypoint.sh:/app/entrypoint.sh
       - ../OtelDotnetTest:/app/OtelDotnetTest

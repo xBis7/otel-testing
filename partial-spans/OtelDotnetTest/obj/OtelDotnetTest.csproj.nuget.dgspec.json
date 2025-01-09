@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/xbis/projects/work/otel-testing/partial-spans/OtelDotnetTest/OtelDotnetTest.csproj": {}
+    "/app/OtelDotnetTest/OtelDotnetTest.csproj": {}
   },
   "projects": {
-    "/Users/xbis/projects/work/otel-testing/partial-spans/OtelDotnetTest/OtelDotnetTest.csproj": {
+    "/app/OtelDotnetTest/OtelDotnetTest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/xbis/projects/work/otel-testing/partial-spans/OtelDotnetTest/OtelDotnetTest.csproj",
+        "projectUniqueName": "/app/OtelDotnetTest/OtelDotnetTest.csproj",
         "projectName": "OtelDotnetTest",
-        "projectPath": "/Users/xbis/projects/work/otel-testing/partial-spans/OtelDotnetTest/OtelDotnetTest.csproj",
-        "packagesPath": "/Users/xbis/.nuget/packages/",
-        "outputPath": "/Users/xbis/projects/work/otel-testing/partial-spans/OtelDotnetTest/obj/",
+        "projectPath": "/app/OtelDotnetTest/OtelDotnetTest.csproj",
+        "packagesPath": "/root/.nuget/packages/",
+        "outputPath": "/app/OtelDotnetTest/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/xbis/.nuget/NuGet/NuGet.Config"
+          "/root/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -73,7 +73,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.101/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
