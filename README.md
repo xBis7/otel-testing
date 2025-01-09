@@ -49,4 +49,5 @@ The docker script accepts the following parameters for action
 * `up`, starts the env
 * `down`, stops the env
 * `restart_new_imgs`, restarts the env and creates new images
+* `restart_and_build_img` - `<container_name>`, restarts the env and creates new image only for the specified container
 * no action param, restarts the env

@@ -28,12 +28,16 @@ services:
     image: mcr.microsoft.com/dotnet/sdk:9.0
     container_name: dotnet-tester
     hostname: dotnet-tester
-    working_dir: /app
+    working_dir: /app/testing/partial-spans
     volumes:
-      - ./dotnet-tester-entrypoint.sh:/app/entrypoint.sh
-      - ../OtelDotnetTest:/app/OtelDotnetTest
+      # Keep the directory depth the same so that the opentelemetry-dotnet
+      # will be added as a dependency using relative paths,
+      # and OtelDotnetTest will work both locally and under docker.
+      - ./dotnet-tester-entrypoint.sh:/app/testing/partial-spans/entrypoint.sh
+      - ../OtelTestSolution.sln:/app/testing/partial-spans/OtelTestSolution.sln
+      - ../OtelDotnetTest:/app/testing/partial-spans/OtelDotnetTest
       - ../../../opentelemetry-dotnet:/app/opentelemetry-dotnet
-    entrypoint: ["/app/entrypoint.sh"]
+    entrypoint: ["/app/testing/partial-spans/entrypoint.sh"]
     command: ["tail", "-f", "/dev/null"]
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"

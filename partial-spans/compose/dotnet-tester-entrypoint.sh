@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
-dotnet new sln -n OtelSetupSolution
+# The local dir structure is
+# parent-dir/opentelemetry-dotnet
+# parent-dir/otel-testing/partial-spans/OtelDotnetTest
 
-dotnet sln OtelSetupSolution.sln add ./OtelDotnetTest/OtelDotnetTest.csproj
-dotnet sln OtelSetupSolution.sln add ./opentelemetry-dotnet/src/OpenTelemetry/OpenTelemetry.csproj
-dotnet sln OtelSetupSolution.sln add ./opentelemetry-dotnet/src/OpenTelemetry.Exporter.Console/OpenTelemetry.Exporter.Console.csproj
-dotnet sln OtelSetupSolution.sln add ./opentelemetry-dotnet/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj
+# The container dir structure is
+# /app/opentelemetry-dotnet
+# /app/testing/partial-spans/OtelDotnetTest
 
-dotnet build OtelSetupSolution.sln
+# Working dir is
+# /app/testing/partial-spans/
+
+dotnet build OtelTestSolution.sln
 
 exec "$@"
