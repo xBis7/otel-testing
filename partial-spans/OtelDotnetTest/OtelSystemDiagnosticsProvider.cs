@@ -59,8 +59,11 @@ public class OtelSystemDiagnosticsProvider
         /* for loop execution */
         for (var a = 0; a < 3; a += 1) {
             var n = $"activity-sub-span-{a}";
-            using var subActivity = SActivitySource.StartActivity(n);
-            Console.WriteLine($"===============> iteration: {a}");
+            using (var subActivity = SActivitySource.StartActivity(n))
+            {
+                Console.WriteLine($"===============> iteration: {a}");
+            }
+            Thread.Sleep(10000);
         }
 
     }
