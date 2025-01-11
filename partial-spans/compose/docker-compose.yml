@@ -46,6 +46,24 @@ services:
     networks:
       - monitoring
 
+  java-tester:
+    image: gradle:8.12.0-jdk17
+    container_name: java-tester
+    hostname: java-tester
+    working_dir: /app
+    volumes:
+      - ./java-tester-entrypoint.sh:/app/entrypoint.sh
+      - ../otel-java-test:/app/otel-java-test
+      - ../../../opentelemetry-java:/app/opentelemetry-java
+    entrypoint: [ "/app/entrypoint.sh" ]
+    command: [ "tail", "-f", "/dev/null" ]
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+    depends_on:
+      - otel-collector
+    networks:
+      - monitoring
+
   # OpenTelemetry Collector Service
   otel-collector:
     build:

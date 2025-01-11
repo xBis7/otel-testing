@@ -10,5 +10,11 @@ jenkins-airflow/compose/postgres_data
 partial-spans/compose/go-binaries/jaeger_bin
 partial-spans/compose/go-binaries/otel_col_bin
 
+partial-spans/otel-java-test/.gradle
+partial-spans/otel-java-test/.kotlin
+partial-spans/otel-java-test/.idea
+partial-spans/otel-java-test/build
+partial-spans/otel-java-test/local.properties
+
 .vscode
 .idea

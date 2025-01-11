@@ -14,11 +14,17 @@ collector_project=${6:-"core"}
 # The 'python-tester' container is installing the otel sdk from the opentelemetry-python source code.
 # It needs to be locally installed.
 if [[ "$github_user" != "-" && "$github_remote_user" != "-" ]]; then
+  # python sdk.
   cloneProjectIfNotExist "$abs_path" "$OTEL_PYTHON_SDK_PROJECT" "$github_user"
   checkoutToProjectCommit "$abs_path" "$OTEL_PYTHON_SDK_PROJECT" "$github_remote_user" "$OTEL_PYTHON_SDK_COMMIT_SHA"
 
+  # dotnet sdk.
   cloneProjectIfNotExist "$abs_path" "$OTEL_DOTNET_SDK_PROJECT" "$github_user"
   checkoutToProjectCommit "$abs_path" "$OTEL_DOTNET_SDK_PROJECT" "$github_remote_user" "$OTEL_DOTNET_SDK_COMMIT_SHA"
+
+  # java sdk.
+  cloneProjectIfNotExist "$abs_path" "$OTEL_JAVA_SDK_PROJECT" "$github_user"
+  checkoutToProjectCommit "$abs_path" "$OTEL_JAVA_SDK_PROJECT" "$github_remote_user" "$OTEL_JAVA_SDK_COMMIT_SHA"
 fi
 
 # Restore the working dir.

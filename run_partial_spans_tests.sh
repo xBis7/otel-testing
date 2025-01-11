@@ -24,24 +24,33 @@ fi
 
 run_python_tests=0
 run_dotnet_tests=0
+run_java_tests=0
 
 if [ "$run_tests_for_sdk_impl" == "python" ]; then
   run_python_tests=1
 elif [ "$run_tests_for_sdk_impl" == "dotnet" ]; then
   run_dotnet_tests=1
+elif [ "$run_tests_for_sdk_impl" == "java" ]; then
+  run_java_tests=1
 elif [ "$run_tests_for_sdk_impl" == "all" ]; then
   run_python_tests=1
   run_dotnet_tests=1
+  run_java_tests=1
 else
-  echo "Value '$run_tests_for_sdk_impl' is invalid. Try one of the following: 'python', 'dotnet', 'all'."
+  echo "Value '$run_tests_for_sdk_impl' is invalid. Try one of the following: 'python', 'dotnet', 'java', 'all'."
 fi
 
 if [ "$run_python_tests" != 0 ]; then
   python_cmd="python test_partial_spans.py"
-  ./partial-spans/utils/exec_in_python_tester.sh "$python_cmd"
+  ./partial-spans/utils/exec_in_tester.sh "python" "$python_cmd"
 fi
 
 if [ "$run_dotnet_tests" != 0 ]; then
   dotnet_cmd="dotnet run --project ./OtelDotnetTest"
-  ./partial-spans/utils/exec_in_dotnet_tester.sh "$dotnet_cmd"
+  ./partial-spans/utils/exec_in_tester.sh "dotnet" "$dotnet_cmd"
+fi
+
+if [ "$run_java_tests" != 0 ]; then
+  java_cmd="java -jar otel-java-test/build/libs/otel-java-test-1.0-SNAPSHOT.jar"
+  ./partial-spans/utils/exec_in_tester.sh "java" "$java_cmd"
 fi
