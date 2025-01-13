@@ -97,3 +97,34 @@ checkoutToProjectCommit() {
   echo "Finished fetching and checking-out for '$project_name' repo."
   echo ""
 }
+
+buildProject() {
+  abs_path=$1
+  project=$2
+
+  build_dotnet_tester=0
+  build_java_tester=0
+
+  if [ "$project" == "dotnet" ]; then
+    build_dotnet_tester=1
+  elif [ "$project" == "java" ]; then
+    build_java_tester=1
+  elif [ "$project" == "all" ]; then
+    build_dotnet_tester=1
+    build_java_tester=1
+  else
+    echo "Value '$project' is invalid. Try one of the following: 'dotnet', 'java', 'all'."
+  fi
+
+  if [ "$build_dotnet_project" != 0 ]; then
+    cd "$abs_path"/"$CURRENT_PROJECT"/partial-spans
+
+    dotnet build OtelTestSolution.sln
+  fi
+
+  if [ "$build_java_project" != 0 ]; then
+    cd "$abs_path"/"$CURRENT_PROJECT"/partial-spans/otel-java-test
+
+    ./gradlew clean build --no-configuration-cache
+  fi
+}

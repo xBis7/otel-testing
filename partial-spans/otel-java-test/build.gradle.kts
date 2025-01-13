@@ -12,6 +12,7 @@ plugins {
 
 repositories {
     mavenLocal()
+    mavenCentral()
     maven {
         url = uri("https://repo.jenkins-ci.org/public/")
     }
@@ -22,11 +23,20 @@ repositories {
 }
 
 dependencies {
-    api(libs.io.opentelemetry.opentelemetry.api)
-    api(libs.io.opentelemetry.opentelemetry.sdk)
-    api(libs.io.opentelemetry.opentelemetry.exporter.otlp)
-    api(libs.io.opentelemetry.opentelemetry.exporter.logging)
-    api(libs.io.opentelemetry.opentelemetry.sdk.extension.autoconfigure)
+//    api(libs.io.opentelemetry.opentelemetry.api)
+//    api(libs.io.opentelemetry.opentelemetry.sdk)
+//    api(libs.io.opentelemetry.opentelemetry.exporter.otlp)
+//    api(libs.io.opentelemetry.opentelemetry.exporter.logging)
+//    api(libs.io.opentelemetry.opentelemetry.sdk.extension.autoconfigure)
+    implementation("io.opentelemetry.api:all")
+    implementation("io.opentelemetry.sdk:all")
+
+    implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.14")
+    implementation("io.opentelemetry.exporter.otlp:all")
+    implementation("io.opentelemetry.exporter.httpsender:okhttp")
+
+    implementation("io.opentelemetry.exporters:logging")
+    implementation("io.opentelemetry.sdk.extensions:autoconfigure")
     testImplementation(libs.org.junit.jupiter.junit.jupiter.api)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.params)
 }

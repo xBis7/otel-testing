@@ -5,3 +5,5 @@
  */
 
 rootProject.name = "otel-java-test"
+
+includeBuild("../../../opentelemetry-java")

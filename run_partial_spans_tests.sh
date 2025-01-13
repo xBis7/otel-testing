@@ -15,11 +15,15 @@ collector_project=${8:-"core"}
 
 if [ "$setup" == "true" ]; then
   ./partial-spans/utils/setup_env.sh "$abs_path" "$github_user" "$github_remote_user" "$arch" "$initial_setup" "$collector_project"
+
+  buildProject "$abs_path" "all"
+  cd "$abs_path"/"$CURRENT_PROJECT"
+
   ./partial-spans/utils/handle_docker.sh "$abs_path" "restart_new_imgs"
 
-  # Wait for the venv setup to finish.
-  # TODO: run the cmd with a repeat counter, instead of a sleep?
-  sleep 35
+  # The entrypoint scripts for the tester containers, are building the test projects.
+  # TODO: add a check to make sure all projects have finished building, instead of a sleep.
+  sleep 30
 fi
 
 run_python_tests=0
