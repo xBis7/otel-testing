@@ -1,6 +1,7 @@
 package com.gross;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
@@ -9,16 +10,18 @@ import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapSetter;
 import io.opentelemetry.exporter.logging.internal.ConsoleSpanExporterProvider;
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporterBuilder;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.autoconfigure.spi.internal.DefaultConfigProperties;
-import io.opentelemetry.sdk.trace.ReadWriteSpan;
+import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
+import io.opentelemetry.semconv.ServiceAttributes;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class OtelProvider {
@@ -39,10 +42,23 @@ public class OtelProvider {
 
   private final W3CTraceContextPropagator contextPropagator = W3CTraceContextPropagator.getInstance();
 
-  public OtelProvider() {
-    ConsoleSpanExporterProvider exporterProvider = new ConsoleSpanExporterProvider();
-    DefaultConfigProperties configProperties = DefaultConfigProperties.create(Collections.emptyMap());
-    SpanExporter exporter = exporterProvider.createExporter(configProperties);
+  public void run(boolean useConsoleExp) {
+    SpanExporter exporter;
+    if (useConsoleExp) {
+      ConsoleSpanExporterProvider exporterProvider = new ConsoleSpanExporterProvider();
+      DefaultConfigProperties configProperties = DefaultConfigProperties.create(Collections.emptyMap());
+      exporter = exporterProvider.createExporter(configProperties);
+    } else {
+      OtlpGrpcSpanExporterBuilder grpcSpanExporterBuilder = OtlpGrpcSpanExporter.builder();
+      exporter = grpcSpanExporterBuilder
+                     .setEndpoint("http://otel-collector:4317")
+                     .build();
+    }
+
+    // 1. Create a Resource with the service name
+    Resource serviceNameResource = Resource.getDefault()
+                                       .merge(Resource.create(
+                                           Attributes.of(ServiceAttributes.SERVICE_NAME, "Java.Tester")));
 
     // 1. Create a SdkTracerProvider and configure it with a BatchSpanProcessor that uses a ConsoleSpanExporter
     SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
@@ -52,6 +68,7 @@ public class OtelProvider {
                                                    .setScheduleDelay(java.time.Duration.ofMillis(500))
                                                    .build()
                                            )
+                                           .setResource(serviceNameResource)
                                            .build();
 
     // 2. Build an OpenTelemetry instance from the configured SdkTracerProvider
@@ -90,14 +107,16 @@ public class OtelProvider {
                 .setParent(rootContext)
                 .startSpan();
 
+        childSpan.makeCurrent();
+
         System.out.println("Iteration '" + i + "'.");
         childSpan.end();
 
-//        try {
-//          Thread.sleep(10000);
-//        } catch (InterruptedException e) {
-//          throw new RuntimeException(e);
-//        }
+        try {
+          Thread.sleep(10000);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
     } finally {
       rootSpan.end();

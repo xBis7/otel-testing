@@ -16,7 +16,10 @@ collector_project=${8:-"core"}
 if [ "$setup" == "true" ]; then
   ./partial-spans/utils/setup_env.sh "$abs_path" "$github_user" "$github_remote_user" "$arch" "$initial_setup" "$collector_project"
 
-  buildProject "$abs_path" "all"
+  if [ "$run_tests_for_sdk_impl" != "python" ]; then
+    buildProject "$abs_path" "$run_tests_for_sdk_impl"
+  fi
+
   cd "$abs_path"/"$CURRENT_PROJECT"
 
   ./partial-spans/utils/handle_docker.sh "$abs_path" "restart_new_imgs"

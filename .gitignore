@@ -16,5 +16,8 @@ partial-spans/otel-java-test/.idea
 partial-spans/otel-java-test/build
 partial-spans/otel-java-test/local.properties
 
+partial-spans/OtelDotnetTest/obj
+partial-spans/OtelDotnetTest/bin
+
 .vscode
 .idea

@@ -8,6 +8,6 @@ public class App {
     System.out.println("Hello World!");
 
     OtelProvider otelProvider = new OtelProvider();
-//    otelProvider.createTestSpans();
+    otelProvider.run(false);
   }
 }

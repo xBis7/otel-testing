@@ -37,6 +37,9 @@ dependencies {
 
     implementation("io.opentelemetry.exporters:logging")
     implementation("io.opentelemetry.sdk.extensions:autoconfigure")
+
+    implementation("io.opentelemetry.semconv:opentelemetry-semconv:1.29.0-alpha")
+
     testImplementation(libs.org.junit.jupiter.junit.jupiter.api)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.params)
 }
