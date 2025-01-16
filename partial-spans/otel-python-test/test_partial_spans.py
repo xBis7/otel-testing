@@ -28,13 +28,13 @@ def long_lived_spans(sdk_provider: SdkProvider):
                 parent_context=parent_ctx) as s:
             s.set_attribute("sub_span_num", counter)
             print(f"Unfinished function, sub-span-{counter}")
-        time.sleep(20)
+        time.sleep(10)
 
     span.set_attribute("who", "x")
 
     span.end()
 
 if __name__ == "__main__":
-    sdk_provider = get_sdk_instance(use_simple_processor=True)
+    sdk_provider = get_sdk_instance()
     short_lived_spans(sdk_provider)
     long_lived_spans(sdk_provider)

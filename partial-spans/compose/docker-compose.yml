@@ -36,9 +36,6 @@ services:
       - ../OtelTestSolution.sln:/app/testing/partial-spans/OtelTestSolution.sln
       - ../OtelDotnetTest:/app/testing/partial-spans/OtelDotnetTest
       - ../../../opentelemetry-dotnet:/app/opentelemetry-dotnet
-# TODO: delete the entrypoint file.
-#      - ./dotnet-tester-entrypoint.sh:/app/testing/partial-spans/entrypoint.sh
-#    entrypoint: ["/app/testing/partial-spans/entrypoint.sh"]
     command: ["tail", "-f", "/dev/null"]
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
