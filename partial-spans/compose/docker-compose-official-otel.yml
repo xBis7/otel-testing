@@ -1,0 +1,121 @@
+version: '3.7'
+
+services:
+  # Container that stays alive and can be used for running scripts.
+  python-tester:
+    build:
+      # If we change the context to the project root, then the Dockerfile
+      # will be able to see files from other directories under the project.
+      # The Dockerfile only sees files from the same context.
+      context: ..
+      dockerfile: compose/Dockerfile.python-tester
+    container_name: python-tester
+    hostname: python-tester
+    volumes:
+      - ./python-tester-entrypoint.sh:/app/entrypoint.sh
+      - ../otel-python-test:/app/otel-python-test
+      - ../../../opentelemetry-python:/app/opentelemetry-python
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
+    depends_on:
+      - otel-collector
+    networks:
+      - monitoring
+
+  dotnet-tester:
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    container_name: dotnet-tester
+    hostname: dotnet-tester
+    working_dir: /app/testing/partial-spans
+    volumes:
+      # Keep the directory depth the same so that the opentelemetry-dotnet
+      # will be added as a dependency using relative paths,
+      # and OtelDotnetTest will work both locally and under docker.
+      - ../OtelTestSolution.sln:/app/testing/partial-spans/OtelTestSolution.sln
+      - ../OtelDotnetTest:/app/testing/partial-spans/OtelDotnetTest
+      - ../../../opentelemetry-dotnet:/app/opentelemetry-dotnet
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_BSP_PARTIAL_SPANS_ENABLED: "true"
+    depends_on:
+      - otel-collector
+    networks:
+      - monitoring
+
+  java-tester:
+    image: gradle:8.12.0-jdk17
+    container_name: java-tester
+    hostname: java-tester
+    working_dir: /app/testing/partial-spans
+    volumes:
+      - ../otel-java-test:/app/testing/partial-spans/otel-java-test
+      - ../../../opentelemetry-java:/app/opentelemetry-java
+    command: [ "tail", "-f", "/dev/null" ]
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+    depends_on:
+      - otel-collector
+    networks:
+      - monitoring
+
+  # OpenTelemetry Collector Service
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otel-collector
+    hostname: otel-collector
+    ports:
+      - "4317:4317"     # For gRPC (OTLP)
+      - "24318:4318"    # OTLP http receiver
+      - "28889:8889"    # Prometheus exporter metrics
+    volumes:
+      - ./config/otel-config.yml:/etc/otel/config.yml
+    command: ["--config", "/etc/otel/config.yml"]
+    networks:
+      - monitoring
+    restart: always
+
+  # Jaeger Service
+  jaeger:
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile.jaeger
+    container_name: jaeger
+    hostname: jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+      COLLECTOR_ENABLE_SPAN_OVERWRITE: true
+      COLLLECTOR_ZIPKIN_HOST_PORT: 9411
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # gRPC endpoint for trace ingestion
+      - "14268:14268"  # HTTP endpoint for trace ingestion
+      - "34317:4317"
+      - "34318:4318"
+      - "39422:9422"
+    networks:
+      - monitoring
+    restart: always
+
+  # Aspire Dashboard Service
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.1.0
+    container_name: aspire-dashboard
+    hostname: aspire-dashboard
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+    ports:
+      - "18888:18888"   # Dashboard web UI
+      - "14317:18889"   # OTLP gRPC listener
+      - "14318:18890"   # OTLP HTTP listener
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
