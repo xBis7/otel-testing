@@ -11,7 +11,9 @@ public class Program
         // var sdkShimProvider = new OtelSdkShimProvider();
         // sdkShimProvider.ExecuteWithConsoleExporter();
 
-        var otelSdProvider = new OtelSystemDiagnosticsProvider();
-        otelSdProvider.ExecuteWithOtlpExporter();
+//        var otelSdProvider = new OtelSystemDiagnosticsProvider();
+//        otelSdProvider.ExecuteWithOtlpExporter();
+        var provider = new TestLogsToPartialSpans();
+        provider.ExecuteWithOtlpExporter();
     }
 }
