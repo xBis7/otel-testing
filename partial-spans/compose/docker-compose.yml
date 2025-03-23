@@ -36,6 +36,7 @@ services:
       - ../OtelTestSolution.sln:/app/testing/partial-spans/OtelTestSolution.sln
       - ../OtelDotnetTest:/app/testing/partial-spans/OtelDotnetTest
       - ../../../opentelemetry-dotnet:/app/opentelemetry-dotnet
+      - ../../../otel-partial-span-processor-dotnet:/app/otel-partial-span-processor-dotnet
     command: ["tail", "-f", "/dev/null"]
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"

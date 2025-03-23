@@ -8,12 +8,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-<!--     <PackageReference Include="OpenTelemetry" Version="1.10.0" /> -->
-<!--     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0" /> -->
-<!--     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.10.0" /> -->
-    <ProjectReference Include="../../../opentelemetry-dotnet/src/OpenTelemetry/OpenTelemetry.csproj" />
-    <ProjectReference Include="../../../opentelemetry-dotnet/src/OpenTelemetry.Exporter.Console/OpenTelemetry.Exporter.Console.csproj" />
-    <ProjectReference Include="../../../opentelemetry-dotnet/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+
+    <PackageReference Include="OpenTelemetry" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.10.0" />
+
+<!--     <ProjectReference Include="../../../opentelemetry-dotnet/src/OpenTelemetry/OpenTelemetry.csproj" /> -->
+<!--     <ProjectReference Include="../../../opentelemetry-dotnet/src/OpenTelemetry.Exporter.Console/OpenTelemetry.Exporter.Console.csproj" /> -->
+<!--     <ProjectReference Include="../../../opentelemetry-dotnet/src/OpenTelemetry.Exporter.PartialActivity/OpenTelemetry.Exporter.PartialActivity.csproj" /> -->
+<!--     <ProjectReference Include="../../../opentelemetry-dotnet/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" /> -->
+
+<!--     <ProjectReference Include="../../../OpenTelemetry.Exporter.PartialActivity/OpenTelemetry.Exporter.PartialActivity.csproj" /> -->
+    <ProjectReference Include="../../../otel-partial-span-processor-dotnet/src/OtelPartialSpanLib/OtelPartialSpanLib.csproj" />
   </ItemGroup>
 
 </Project>

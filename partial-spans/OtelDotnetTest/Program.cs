@@ -8,12 +8,9 @@ public class Program
 
     static void Main(string[] args)
     {
-        // var sdkShimProvider = new OtelSdkShimProvider();
-        // sdkShimProvider.ExecuteWithConsoleExporter();
-
-//        var otelSdProvider = new OtelSystemDiagnosticsProvider();
-//        otelSdProvider.ExecuteWithOtlpExporter();
         var provider = new TestLogsToPartialSpans();
-        provider.ExecuteWithOtlpExporter();
+        bool useStandaloneProcessor = true;
+
+        provider.ExecuteWithOtlpExporter(useStandaloneProcessor);
     }
 }
