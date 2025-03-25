@@ -18,10 +18,10 @@ services:
     entrypoint: ["/app/entrypoint.sh"]
     command: ["tail", "-f", "/dev/null"]
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
-      OTEL_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://${OTEL_COLLECTOR_HOSTNAME}:4317"
+      OTEL_LOGS_ENDPOINT: "http://${OTEL_COLLECTOR_HOSTNAME}:4318/v1/logs"
     depends_on:
-      - otel-collector
+      - ${OTEL_COLLECTOR_HOSTNAME}
     networks:
       - monitoring
 
@@ -40,10 +40,10 @@ services:
       - ../../../otel-partial-span-processor-dotnet:/app/otel-partial-span-processor-dotnet
     command: ["tail", "-f", "/dev/null"]
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://${OTEL_COLLECTOR_HOSTNAME}:4317"
       OTEL_BSP_PARTIAL_SPANS_ENABLED: "true"
     depends_on:
-      - otel-collector
+      - ${OTEL_COLLECTOR_HOSTNAME}
     networks:
       - monitoring
 
@@ -57,27 +57,68 @@ services:
       - ../../../opentelemetry-java:/app/opentelemetry-java
     command: [ "tail", "-f", "/dev/null" ]
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://${OTEL_COLLECTOR_HOSTNAME}:4317"
     depends_on:
-      - otel-collector
+      - ${OTEL_COLLECTOR_HOSTNAME}
     networks:
       - monitoring
 
   # OpenTelemetry Collector Service
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib
-    container_name: otel-collector
-    hostname: otel-collector
+  # otel-collector:
+  #   image: otel/opentelemetry-collector-contrib
+  #   container_name: otel-collector
+  #   hostname: otel-collector
+  #   ports:
+  #     - "4317:4317"     # For gRPC (OTLP)
+  #     - "24318:4318"    # OTLP http receiver
+  #     - "28889:8889"    # Prometheus exporter metrics
+  #   volumes:
+  #     - ./config/otel-config.yml:/etc/otel/config.yml
+  #   command: ["--config", "/etc/otel/config.yml"]
+  #   networks:
+  #     - monitoring
+  #   restart: always
+
+  otel-partial-collector:
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile.otel-partial-collector
+    container_name: ${OTEL_COLLECTOR_HOSTNAME}
+    hostname: ${OTEL_COLLECTOR_HOSTNAME}
+    working_dir: /app
+    depends_on:
+      otel-partial-collector-db:
+        condition: service_healthy
     ports:
-      - "4317:4317"     # For gRPC (OTLP)
-      - "24318:4318"    # OTLP http receiver
-      - "28889:8889"    # Prometheus exporter metrics
+      - "4317:4317" # For gRPC (OTLP)
+      - "4318:4318" # OTLP http receiver
     volumes:
-      - ./config/otel-config.yml:/etc/otel/config.yml
-    command: ["--config", "/etc/otel/config.yml"]
+      - ../../../otel-partial-collector:/app
+      - ./otel-partial-collector-entrypoint.sh:/app/entrypoint.sh
+      - ./otel-partial-collector-config.yaml:/app/example/config.yaml
+    networks:
+      - monitoring
+    restart: on-failure
+    entrypoint: ["/app/entrypoint.sh"]
+
+  otel-partial-collector-db:
+    image: postgres:latest
+    container_name: otel-partial-collector-db
+    hostname: otel-partial-collector-db
+    environment:
+      POSTGRES_DB: otelpartialcollector
+      POSTGRES_PASSWORD: test
+    ports:
+      - "40444:5432"
     networks:
       - monitoring
     restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 
   # Jaeger Service
   jaeger:
@@ -108,7 +149,7 @@ services:
     hostname: aspire-dashboard
     environment:
       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://${OTEL_COLLECTOR_HOSTNAME}:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
     ports:
       - "18888:18888"   # Dashboard web UI

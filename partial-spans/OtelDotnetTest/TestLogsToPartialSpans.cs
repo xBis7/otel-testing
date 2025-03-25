@@ -39,6 +39,8 @@ public class TestLogsToPartialSpans
             var n = $"activity-sub-span-{a}";
             using var subActivity = SActivitySource.StartActivity(n);
             Console.WriteLine($"===============> iteration: {a}");
+            Console.WriteLine($"===============> sleeping for 10 secs");
+            Thread.Sleep(10000);
         }
 
     }
@@ -55,14 +57,14 @@ public class TestLogsToPartialSpans
     private void useStandaloneProcessor() {
         var otlpTraceOptions = new OtlpExporterOptions
         {
-            Endpoint = new Uri("http://otel-collector:4317"),
+            Endpoint = new Uri("http://otel-partial-collector:4317"),
             Protocol = OtlpExportProtocol.Grpc,
         };
         var traceExporter = new OtlpTraceExporter(otlpTraceOptions);
 
         var otlpLogOptions = new OtlpExporterOptions
         {
-            Endpoint = new Uri("http://otel-collector:4318/v1/logs"),
+            Endpoint = new Uri("http://otel-partial-collector:4318/v1/logs"),
             Protocol = OtlpExportProtocol.HttpProtobuf,
         };
         var logExporter = new OtlpLogExporter(otlpLogOptions);
@@ -74,7 +76,7 @@ public class TestLogsToPartialSpans
                 options.ParseStateValues = true;
                 options.AddOtlpExporter(o =>
                 {
-                    o.Endpoint = new Uri("http://otel-collector:4318/v1/logs");
+                    o.Endpoint = new Uri("http://otel-partial-collector:4318/v1/logs");
                     o.Protocol = OtlpExportProtocol.HttpProtobuf;
                 });
             }));
@@ -102,8 +104,9 @@ public class TestLogsToPartialSpans
             using (var subActivity = SActivitySource.StartActivity(n))
             {
                 Console.WriteLine($"===============> iteration: {a}");
+                Console.WriteLine($"===============> sleeping for 10 secs inside activity");
+                Thread.Sleep(10000);
             }
-            Thread.Sleep(10000);
         }
     }
 

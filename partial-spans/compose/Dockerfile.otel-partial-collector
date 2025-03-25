@@ -1,0 +1,6 @@
+FROM golang:1.24.0
+
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.2/migrate.linux-arm64.deb -o migrate.deb
+
+RUN apt update -y \
+    && apt install -y ./migrate.deb
