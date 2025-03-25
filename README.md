@@ -51,3 +51,17 @@ The docker script accepts the following parameters for action
 * `restart_new_imgs`, restarts the env and creates new images
 * `restart_and_build_img` - `<container_name>`, restarts the env and creates new image only for the specified container
 * no action param, restarts the env
+
+To run dotnet test
+* Configure Docker environment
+```bash
+./partial-spans/utils/handle_docker.sh /path/to/projects "restart_new_imgs" "docker-compose-official-otel.yml"
+```
+* Run the test
+```bash
+./partial-spans/utils/exec_in_tester.sh dotnet "dotnet run --project ./OtelDotnetTest"
+```
+* Stop the Docker environment
+```bash
+./partial-spans/utils/handle_docker.sh /path/to/projects "down" "docker-compose-official-otel.yml"
+```
