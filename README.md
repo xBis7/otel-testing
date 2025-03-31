@@ -59,7 +59,7 @@ To run dotnet test
 ```
 * Run the test
 ```bash
-./partial-spans/utils/exec_in_tester.sh dotnet "dotnet run --project ./OtelDotnetTest"
+./partial-spans/utils/exec_in_tester.sh dotnet "dotnet run --project ./OpenTelemetry.Exporter.Partial"
 ```
 * Stop the Docker environment
 ```bash
